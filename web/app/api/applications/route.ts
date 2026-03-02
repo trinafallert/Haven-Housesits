@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
         select: {
           id: true, title: true, city: true, state: true,
           startDate: true, endDate: true,
-          photos: { take: 1, select: { url: true } },
+          photos: true,
           pets: { select: { type: true, name: true } },
         },
       },

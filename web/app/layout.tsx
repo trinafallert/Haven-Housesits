@@ -1,19 +1,10 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-})
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
-})
+// Use system fonts (no Google Fonts network request required during build)
+const interVariable  = '--font-inter'
+const playfairVariable = '--font-playfair'
 
 export const metadata: Metadata = {
   title: {
@@ -81,7 +72,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="en">
       <body className="min-h-screen bg-haven-cream font-sans antialiased">
         <Providers>{children}</Providers>
       </body>

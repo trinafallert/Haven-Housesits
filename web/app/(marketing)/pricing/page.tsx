@@ -103,7 +103,7 @@ const switchBenefits = [
   'Currently on TrustedHousesitters, Rover, Wag or another platform?',
   'Take a screenshot of your active subscription or payment receipt.',
   'Upload it when you sign up for Haven Premium.',
-  'We'll credit 3 months of Haven Premium to your account — free.',
+  "We'll credit 3 months of Haven Premium to your account — free.",
 ]
 
 export default function PricingPage() {
