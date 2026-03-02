@@ -43,8 +43,7 @@
     "react-hook-form": "^7.52.2",
     "zod": "^3.23.8",
     "@hookform/resolvers": "^3.9.0",
-    "react-native-keyboard-aware-scroll-view": "^0.9.5",
-    "react-native-rating": "^1.0.7"
+    "react-native-keyboard-aware-scroll-view": "^0.9.5"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
