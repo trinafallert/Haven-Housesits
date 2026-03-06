@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#5BA4A4"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.havenhousesits.app",
@@ -47,7 +49,8 @@
         {
           "photosPermission": "Haven needs access to your photos to upload profile pictures."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "scheme": "havenhousesits",
     "extra": {

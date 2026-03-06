@@ -1,8 +1,9 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { Colors, Shadows } from '@/constants/colors'
+import { useState } from 'react'
 
 const MOCK_USER = {
   firstName: 'Jordan',
@@ -30,6 +31,7 @@ const EDIT_SECTIONS = [
 
 export default function ProfileScreen() {
   const router = useRouter()
+  const [isOwnerMode, setIsOwnerMode] = useState(false)
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -37,10 +39,22 @@ export default function ProfileScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>My Profile</Text>
+          <Text style={styles.title}>{isOwnerMode ? '🏠 Owner Mode' : '🐾 Sitter Mode'}</Text>
           <TouchableOpacity style={styles.settingsBtn} onPress={() => router.push('/settings')}>
             <Text style={{ fontSize: 20 }}>⚙️</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Mode switcher */}
+        <View style={styles.modeSwitcher}>
+          <Text style={[styles.modeLabel, !isOwnerMode && styles.modeLabelActive]}>🐾 Sitter</Text>
+          <Switch
+            value={isOwnerMode}
+            onValueChange={setIsOwnerMode}
+            trackColor={{ false: Colors.teal, true: Colors.navy }}
+            thumbColor={Colors.white}
+          />
+          <Text style={[styles.modeLabel, isOwnerMode && styles.modeLabelActive]}>🏠 Owner</Text>
         </View>
 
         {/* Profile card */}
@@ -157,7 +171,10 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, paddingBottom: 16 },
   title: { fontSize: 26, fontWeight: '800', color: Colors.navy, letterSpacing: -0.5 },
-  settingsBtn: { padding: 8 },
+  settingsBtn:      { padding: 8 },
+  modeSwitcher:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: Colors.white, marginHorizontal: 20, borderRadius: 14, padding: 12, ...Shadows.card },
+  modeLabel:        { fontSize: 15, fontWeight: '600', color: Colors.grayLight },
+  modeLabelActive:  { color: Colors.navy },
   profileCard: { backgroundColor: Colors.white, borderRadius: 20, padding: 20, marginBottom: 24, ...Shadows.card },
   avatarWrap: { position: 'relative', width: 80, height: 80, marginBottom: 12 },
   avatar: { width: 80, height: 80, borderRadius: 40 },

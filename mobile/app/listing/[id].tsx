@@ -1,350 +1,342 @@
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Dimensions, Modal, TextInput, ActivityIndicator,
+  Dimensions, Modal, TextInput, Platform,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { Colors, Shadows } from '@/constants/colors'
-import { MOCK_LISTINGS, PET_ICONS, SIT_TYPE_COLORS, SIT_TYPE_LABELS } from '@/constants/mock-data'
+import { MOCK_LISTINGS } from '@/constants/mock-data'
 
 const { width } = Dimensions.get('window')
 
+const ADD_ONS = [
+  { id: 'deep_clean',  icon: '🧹', label: 'Deep Clean',       desc: 'Professional deep clean before you return', price: 45 },
+  { id: 'pet_photos',  icon: '📸', label: 'Pet Photo Updates', desc: 'Daily photos of your pets sent to you',      price: 25 },
+  { id: 'grocery',     icon: '🛒', label: 'Grocery Stocking',  desc: 'Home stocked with your list when you return', price: 30 },
+  { id: 'plant_care',  icon: '🪴', label: 'Plant Care',        desc: 'Watering & care for all your plants',         price: 15 },
+]
+
 export default function ListingDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id }  = useLocalSearchParams<{ id: string }>()
   const router  = useRouter()
   const listing = MOCK_LISTINGS.find((l) => l.id === id) ?? MOCK_LISTINGS[0]
 
-  const [saved, setSaved]         = useState(false)
-  const [showApply, setShowApply] = useState(false)
-  const [message, setMessage]     = useState('')
-  const [applying, setApplying]   = useState(false)
-  const [applied, setApplied]     = useState(false)
+  const [saved,        setSaved]        = useState(false)
+  const [showApply,    setShowApply]    = useState(false)
+  const [message,      setMessage]      = useState('')
+  const [applied,      setApplied]      = useState(false)
+  const [addOns,       setAddOns]       = useState<string[]>([])
+  const [photoIdx,     setPhotoIdx]     = useState(0)
 
-  const isPaid  = listing.sitType === 'PAID'
-  const hasDogs = listing.pets.some((p) => p.type === 'DOG')
-  const days    = Math.ceil(
-    (new Date(listing.endDate).getTime() - new Date(listing.startDate).getTime()) / (1000 * 60 * 60 * 24)
-  )
-  const total      = isPaid && listing.dailyRate ? listing.dailyRate * days : 0
-  const sittersGet = Math.round(total * 0.92)
+  const isPaid = (listing as any).sitType === 'PAID'
+  const days   = Math.ceil((new Date((listing as any).endDate).getTime() - new Date((listing as any).startDate).getTime()) / 86400000)
+  const total  = isPaid && (listing as any).dailyRate ? (listing as any).dailyRate * days : 0
+  const addOnTotal = addOns.reduce((sum, id) => sum + (ADD_ONS.find(a => a.id === id)?.price ?? 0), 0)
 
-  async function handleApply() {
-    if (message.length < 50) return
-    setApplying(true)
-    await new Promise((r) => setTimeout(r, 1000))
-    setApplying(false)
-    setApplied(true)
-    setTimeout(() => { setShowApply(false); setApplied(false) }, 1800)
-  }
+  const petIcons: Record<string, string> = { DOG:'🐕', CAT:'🐈', BIRD:'🦜', FISH:'🐠', REPTILE:'🦎', HORSE:'🐴', SMALL_PET:'🐹' }
+
+  const toggleAddOn = (id: string) =>
+    setAddOns(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+
+  const fmt = (s: string) => new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      {/* Back + heart header */}
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.topBtn} onPress={() => router.back()}>
+          <Text style={styles.topBtnText}>←</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.topBtn} onPress={() => setSaved(!saved)}>
+          <Text style={{ fontSize: 22 }}>{saved ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* Photo */}
-        <View style={styles.photoWrap}>
-          <Image source={{ uri: listing.photos[0] }} style={styles.photo} contentFit="cover" transition={300} />
-          {/* Back + save overlay */}
-          <SafeAreaView style={styles.photoOverlay}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-              <Text style={styles.backBtnText}>←</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveBtn} onPress={() => setSaved(!saved)}>
-              <Text style={{ fontSize: 20 }}>{saved ? '❤️' : '🤍'}</Text>
-            </TouchableOpacity>
-          </SafeAreaView>
-          {/* Type badge */}
-          <View style={[styles.typeBadge, { backgroundColor: SIT_TYPE_COLORS[listing.sitType] }]}>
-            <Text style={styles.typeBadgeText}>{SIT_TYPE_LABELS[listing.sitType]}</Text>
-          </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* Hero photo */}
+        <View style={styles.heroWrap}>
+          <Image
+            source={{ uri: (listing as any).photos?.[0] ?? 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }}
+            style={styles.hero}
+            contentFit="cover"
+            transition={300}
+          />
+          {isPaid && (
+            <View style={styles.paidBadge}><Text style={styles.paidBadgeText}>💰 PAID SIT</Text></View>
+          )}
         </View>
 
         <View style={styles.body}>
-
           {/* Title + location */}
-          <Text style={styles.title}>{listing.title}</Text>
-          <Text style={styles.location}>📍 {listing.city}, {listing.state}</Text>
+          <Text style={styles.title}>{(listing as any).title}</Text>
+          <Text style={styles.location}>📍 {(listing as any).city}, {(listing as any).country ?? (listing as any).state}</Text>
 
-          {/* Dates */}
-          <View style={styles.datesRow}>
-            <View style={styles.dateBox}>
-              <Text style={styles.dateMon}>{new Date(listing.startDate).toLocaleString('en-US', { month: 'short' }).toUpperCase()}</Text>
-              <Text style={styles.dateDay}>{new Date(listing.startDate).getDate()}</Text>
-              <Text style={styles.dateYear}>{new Date(listing.startDate).getFullYear()}</Text>
+          {/* Dates card */}
+          <View style={styles.datesCard}>
+            <View style={styles.dateBlock}>
+              <Text style={styles.dateLabel}>FROM</Text>
+              <Text style={styles.dateDay}>{new Date((listing as any).startDate).getDate()}</Text>
+              <Text style={styles.dateMonth}>{new Date((listing as any).startDate).toLocaleDateString('en-US',{month:'short'})}</Text>
+              <Text style={styles.dateYear}>{new Date((listing as any).startDate).getFullYear()}</Text>
             </View>
-            <View style={styles.dateSep}><Text style={styles.dateSepText}>→</Text><Text style={styles.daysText}>{days} days</Text></View>
-            <View style={styles.dateBox}>
-              <Text style={styles.dateMon}>{new Date(listing.endDate).toLocaleString('en-US', { month: 'short' }).toUpperCase()}</Text>
-              <Text style={styles.dateDay}>{new Date(listing.endDate).getDate()}</Text>
-              <Text style={styles.dateYear}>{new Date(listing.endDate).getFullYear()}</Text>
+            <View style={styles.dateDivider}>
+              <Text style={styles.dateDividerText}>{days}d</Text>
             </View>
-          </View>
-
-          {/* Escrow notice for paid sits */}
-          {isPaid && (
-            <View style={styles.escrowBanner}>
-              <Text style={styles.escrowIcon}>🔒</Text>
-              <View>
-                <Text style={styles.escrowTitle}>Payment held securely in escrow</Text>
-                <Text style={styles.escrowSub}>Released to sitter 24 hrs after sit ends</Text>
+            <View style={styles.dateBlock}>
+              <Text style={styles.dateLabel}>TO</Text>
+              <Text style={styles.dateDay}>{new Date((listing as any).endDate).getDate()}</Text>
+              <Text style={styles.dateMonth}>{new Date((listing as any).endDate).toLocaleDateString('en-US',{month:'short'})}</Text>
+              <Text style={styles.dateYear}>{new Date((listing as any).endDate).getFullYear()}</Text>
+            </View>
+            {isPaid && (
+              <View style={styles.rateBlock}>
+                <Text style={styles.rateLabel}>TOTAL PAY</Text>
+                <Text style={styles.rateAmount}>${total}</Text>
+                <Text style={styles.rateBreak}>${(listing as any).dailyRate}/day</Text>
               </View>
-            </View>
-          )}
-
-          {/* Owner card */}
-          <View style={styles.ownerCard}>
-            <View style={styles.ownerAvatar}>
-              <Text style={{ fontSize: 24 }}>👤</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.ownerName}>{listing.owner.firstName}</Text>
-              <Text style={styles.ownerMeta}>
-                ⭐ {listing.owner.averageRating} · {listing.owner.totalReviews} reviews
-              </Text>
-              <View style={styles.verifiedChips}>
-                <Text style={styles.chip}>ID ✓</Text>
-                <Text style={styles.chip}>Member ✓</Text>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.msgBtn}>
-              <Text style={styles.msgBtnText}>💬 Message</Text>
-            </TouchableOpacity>
+            )}
           </View>
 
           {/* Pets */}
-          {listing.pets.length > 0 && (
+          {((listing as any).pets ?? []).length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pets</Text>
-              <View style={styles.petsGrid}>
-                {listing.pets.map((pet, i) => (
-                  <View key={i} style={styles.petCard}>
-                    <Text style={styles.petEmoji}>{PET_ICONS[pet.type]}</Text>
-                    <Text style={styles.petName}>{pet.name}</Text>
+              <Text style={styles.sectionTitle}>🐾 Pets</Text>
+              <View style={styles.petsRow}>
+                {((listing as any).pets ?? []).map((p: any, i: number) => (
+                  <View key={i} style={styles.petChip}>
+                    <Text style={styles.petEmoji}>{petIcons[p.type] ?? '🐾'}</Text>
+                    <Text style={styles.petName}>{p.name}</Text>
                   </View>
                 ))}
               </View>
             </View>
           )}
 
+          {/* Owner */}
+          <View style={styles.ownerCard}>
+            <Image
+              source={{ uri: (listing as any).owner?.avatar ?? 'https://randomuser.me/api/portraits/women/44.jpg' }}
+              style={styles.ownerAvatar}
+              contentFit="cover"
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.ownerName}>{(listing as any).owner?.firstName} {(listing as any).owner?.lastName}</Text>
+              <View style={styles.ownerRating}>
+                <Text style={{ color: '#F59E0B' }}>★</Text>
+                <Text style={styles.ownerRatingText}>{(listing as any).owner?.averageRating?.toFixed(1) ?? '5.0'} · {(listing as any).owner?.totalReviews ?? 0} reviews</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.msgBtn}>
+              <Text style={styles.msgBtnText}>Message</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Amenities */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Amenities</Text>
-            <View style={styles.amenitiesGrid}>
-              {[
-                listing.hasWifi && '📶 WiFi',
-                listing.hasPool && '🏊 Pool',
-                listing.hasParking && '🚗 Parking',
-                hasDogs && '🐕 Dog walks needed',
-              ].filter(Boolean).map((a) => (
-                <View key={a as string} style={styles.amenityChip}>
-                  <Text style={styles.amenityText}>{a as string}</Text>
-                </View>
-              ))}
+            <Text style={styles.sectionTitle}>🏠 Home details</Text>
+            <View style={styles.amenitiesRow}>
+              {(listing as any).hasWifi    && <View style={styles.amenity}><Text>📶</Text><Text style={styles.amenityText}>Wifi</Text></View>}
+              {(listing as any).hasPool    && <View style={styles.amenity}><Text>🏊</Text><Text style={styles.amenityText}>Pool</Text></View>}
+              {(listing as any).hasParking && <View style={styles.amenity}><Text>🚗</Text><Text style={styles.amenityText}>Parking</Text></View>}
+              <View style={styles.amenity}><Text>{(listing as any).homeType === 'APARTMENT' ? '🏢' : '🏠'}</Text><Text style={styles.amenityText}>{(listing as any).homeType ?? 'House'}</Text></View>
             </View>
           </View>
 
-          {/* Tip note */}
-          <View style={styles.tipBox}>
-            <Text style={styles.tipEmoji}>💛</Text>
-            <View>
-              <Text style={styles.tipTitle}>Tips are always welcome</Text>
-              <Text style={styles.tipSub}>Haven takes 0% of tips — 100% goes to you.</Text>
-            </View>
-          </View>
-
-          {/* Applications count */}
-          <View style={styles.appRow}>
-            <View style={styles.appBarBg}>
-              <View style={[styles.appBarFill, {
-                width: `${(listing.applicationCount / listing.maxApplications) * 100}%` as any
-              }]} />
-            </View>
-            <Text style={styles.appText}>
-              {listing.applicationCount} of {listing.maxApplications} applications
+          {/* Description */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📋 About this sit</Text>
+            <Text style={styles.descText}>
+              Welcome to our home! We're looking for a caring, responsible sitter who will treat our home and pets like their own.
+              Our home is clean, comfortable, and fully stocked. Free wifi, Netflix, and a beautiful outdoor space.
+              {isPaid ? ` This is a paid sit — you'll earn $${(listing as any).dailyRate}/day.` : ' This is a free exchange sit — enjoy the home in exchange for pet care.'}
             </Text>
           </View>
 
-          {/* Haven guarantee */}
-          <View style={styles.guaranteeBox}>
-            <Text style={styles.guaranteeTitle}>🛡️ Haven Guarantee</Text>
-            <Text style={styles.guaranteeSub}>Up to $1,000 property protection included free on every sit.</Text>
+          {/* Add-ons */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>✨ Add-ons</Text>
+            <Text style={styles.sectionSubtitle}>Upgrade your stay for the homeowner</Text>
+            {ADD_ONS.map(a => (
+              <View key={a.id} style={styles.addOnRow}>
+                <View style={styles.addOnIcon}><Text style={{ fontSize: 22 }}>{a.icon}</Text></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.addOnLabel}>{a.label}</Text>
+                  <Text style={styles.addOnDesc}>{a.desc}</Text>
+                </View>
+                <View style={styles.addOnRight}>
+                  <Text style={styles.addOnPrice}>+${a.price}</Text>
+                  <TouchableOpacity
+                    style={[styles.addOnBtn, addOns.includes(a.id) && styles.addOnBtnActive]}
+                    onPress={() => toggleAddOn(a.id)}
+                  >
+                    <Text style={[styles.addOnBtnText, addOns.includes(a.id) && styles.addOnBtnTextActive]}>
+                      {addOns.includes(a.id) ? '✓ Added' : 'Add'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
           </View>
 
+          {/* Applications */}
+          <View style={styles.appBar}>
+            <View style={styles.appCount}>
+              <Text style={styles.appCountNum}>{(listing as any).applicationCount ?? 0}</Text>
+              <Text style={styles.appCountLabel}>applications</Text>
+            </View>
+            <Text style={styles.appNote}>of {(listing as any).maxApplications ?? 10} max spots</Text>
+          </View>
         </View>
       </ScrollView>
 
       {/* Sticky apply bar */}
-      <View style={styles.stickyBar}>
-        <View>
-          {isPaid && listing.dailyRate ? (
-            <>
-              <Text style={styles.stickyPrice}>${listing.dailyRate}<Text style={styles.stickyUnit}>/day</Text></Text>
-              <Text style={styles.stickyEarns}>You receive ${sittersGet} total</Text>
-            </>
-          ) : (
-            <Text style={styles.stickyFree}>Free exchange</Text>
+      {!applied ? (
+        <View style={styles.stickyBar}>
+          {addOns.length > 0 && (
+            <Text style={styles.addOnSummary}>+${addOnTotal} in add-ons selected</Text>
           )}
+          <TouchableOpacity style={styles.applyBtn} onPress={() => setShowApply(true)}>
+            <Text style={styles.applyBtnText}>
+              {isPaid ? `Apply to sit · Earn $${total}` : 'Apply to sit · Free'}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.applyBtn} onPress={() => setShowApply(true)} activeOpacity={0.85}>
-          <Text style={styles.applyBtnText}>Apply now</Text>
-        </TouchableOpacity>
-      </View>
+      ) : (
+        <View style={styles.stickyBar}>
+          <View style={styles.appliedBanner}>
+            <Text style={styles.appliedText}>✓ Application sent! We'll notify you when they respond.</Text>
+          </View>
+        </View>
+      )}
 
       {/* Apply modal */}
-      <Modal visible={showApply} animationType="slide" presentationStyle="pageSheet">
+      <Modal visible={showApply} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowApply(false)}>
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Apply to this sit</Text>
+            <Text style={styles.modalTitle}>Apply to sit</Text>
             <TouchableOpacity onPress={() => setShowApply(false)}>
               <Text style={styles.modalClose}>✕</Text>
             </TouchableOpacity>
           </View>
-
-          {applied ? (
-            <View style={styles.appliedState}>
-              <Text style={styles.appliedEmoji}>🎉</Text>
-              <Text style={styles.appliedTitle}>Application sent!</Text>
-              <Text style={styles.appliedSub}>
-                {listing.owner.firstName} will be in touch soon.
-              </Text>
-            </View>
-          ) : (
-            <ScrollView contentContainerStyle={styles.modalBody}>
-              <Text style={styles.modalLabel}>
-                Introduce yourself to {listing.owner.firstName}
-              </Text>
-              <Text style={styles.modalHint}>
-                Min. 50 characters. Tell them about your experience and why you love their listing.
-              </Text>
-              <TextInput
-                style={styles.modalTextarea}
-                multiline
-                numberOfLines={6}
-                value={message}
-                onChangeText={setMessage}
-                placeholder={`Hi ${listing.owner.firstName}! I'd love to care for your home and pets…`}
-                placeholderTextColor={Colors.grayLight}
-              />
-              <Text style={styles.charCount}>{message.length} / 1000</Text>
-
-              <TouchableOpacity
-                style={[styles.sendBtn, (message.length < 50 || applying) && styles.sendBtnDisabled]}
-                onPress={handleApply}
-                disabled={message.length < 50 || applying}
-              >
-                {applying
-                  ? <ActivityIndicator color={Colors.white} />
-                  : <Text style={styles.sendBtnText}>Send application</Text>
-                }
-              </TouchableOpacity>
-            </ScrollView>
-          )}
+          <ScrollView contentContainerStyle={styles.modalBody}>
+            <Text style={styles.modalSubtitle}>Introduce yourself to {(listing as any).owner?.firstName}</Text>
+            <TextInput
+              style={styles.messageInput}
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              numberOfLines={6}
+              placeholder={`Hi ${(listing as any).owner?.firstName}! I'd love to sit for you. A little about me...`}
+              placeholderTextColor={Colors.grayLight}
+            />
+            {addOns.length > 0 && (
+              <View style={styles.addOnSummaryCard}>
+                <Text style={styles.addOnSummaryTitle}>Your selected add-ons:</Text>
+                {addOns.map(id => {
+                  const a = ADD_ONS.find(x => x.id === id)!
+                  return <Text key={id} style={styles.addOnSummaryItem}>{a.icon} {a.label} · +${a.price}</Text>
+                })}
+                <Text style={styles.addOnSummaryTotal}>Total add-ons: +${addOnTotal}</Text>
+              </View>
+            )}
+          </ScrollView>
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={[styles.sendBtn, message.length < 20 && styles.sendBtnDisabled]}
+              disabled={message.length < 20}
+              onPress={() => { setApplied(true); setShowApply(false) }}
+            >
+              <Text style={styles.sendBtnText}>Send application</Text>
+            </TouchableOpacity>
+            {message.length < 20 && <Text style={styles.sendHint}>Write at least 20 characters</Text>}
+          </View>
         </SafeAreaView>
       </Modal>
-    </View>
+    </SafeAreaView>
   )
 }
 
+const S = Shadows
+const C = Colors
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.cream },
-  photoWrap: { height: 320, position: 'relative' },
-  photo: { width: '100%', height: '100%' },
-  photoOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    flexDirection: 'row', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 4,
-  },
-  backBtn: { backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  backBtnText: { fontSize: 18, color: Colors.navy },
-  saveBtn: { backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 20, width: 38, height: 38, alignItems: 'center', justifyContent: 'center' },
-  typeBadge: { position: 'absolute', bottom: 14, left: 16, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  typeBadgeText: { color: Colors.white, fontSize: 12, fontWeight: '700' },
-  body: { paddingHorizontal: 20, paddingTop: 20 },
-  title: { fontSize: 22, fontWeight: '800', color: Colors.navy, letterSpacing: -0.5, marginBottom: 6 },
-  location: { fontSize: 14, color: Colors.gray, marginBottom: 16 },
-  datesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 },
-  dateBox: { alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, padding: 12, minWidth: 72, ...Shadows.card },
-  dateMon: { fontSize: 11, fontWeight: '700', color: Colors.teal, letterSpacing: 1 },
-  dateDay: { fontSize: 30, fontWeight: '800', color: Colors.navy, lineHeight: 34 },
-  dateYear: { fontSize: 11, color: Colors.gray },
-  dateSep: { alignItems: 'center', gap: 4 },
-  dateSepText: { fontSize: 20, color: Colors.grayLight },
-  daysText: { fontSize: 11, color: Colors.gray, fontWeight: '600' },
-  escrowBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: Colors.tealPale, borderRadius: 14, padding: 12, marginBottom: 16,
-  },
-  escrowIcon: { fontSize: 20 },
-  escrowTitle: { fontSize: 13, fontWeight: '700', color: Colors.tealDark },
-  escrowSub: { fontSize: 12, color: Colors.teal, marginTop: 1 },
-  ownerCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.white, borderRadius: 16, padding: 14, marginBottom: 20, ...Shadows.card,
-  },
-  ownerAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.tealPale, alignItems: 'center', justifyContent: 'center' },
-  ownerName: { fontSize: 15, fontWeight: '700', color: Colors.navy },
-  ownerMeta: { fontSize: 12, color: Colors.gray, marginTop: 2 },
-  verifiedChips: { flexDirection: 'row', gap: 6, marginTop: 4 },
-  chip: { fontSize: 10, fontWeight: '700', color: Colors.tealDark, backgroundColor: Colors.tealPale, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
-  msgBtn: { backgroundColor: Colors.tealPale, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
-  msgBtnText: { fontSize: 13, fontWeight: '600', color: Colors.tealDark },
-  section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: Colors.navy, marginBottom: 10 },
-  petsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  petCard: { backgroundColor: Colors.white, borderRadius: 14, padding: 12, alignItems: 'center', minWidth: 72, ...Shadows.card },
-  petEmoji: { fontSize: 28, marginBottom: 4 },
-  petName: { fontSize: 11, fontWeight: '600', color: Colors.navy },
-  amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  amenityChip: { backgroundColor: Colors.white, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, ...Shadows.card },
-  amenityText: { fontSize: 13, fontWeight: '500', color: Colors.navy },
-  tipBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFBEB', borderRadius: 14, padding: 12, marginBottom: 16 },
-  tipEmoji: { fontSize: 22 },
-  tipTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
-  tipSub: { fontSize: 12, color: '#B45309', marginTop: 1 },
-  appRow: { marginBottom: 16 },
-  appBarBg: { height: 5, backgroundColor: Colors.sand, borderRadius: 4, overflow: 'hidden', marginBottom: 4 },
-  appBarFill: { height: '100%', backgroundColor: Colors.teal, borderRadius: 4 },
-  appText: { fontSize: 12, color: Colors.grayLight },
-  guaranteeBox: { backgroundColor: Colors.navy, borderRadius: 16, padding: 14, marginBottom: 8 },
-  guaranteeTitle: { fontSize: 14, fontWeight: '700', color: Colors.white, marginBottom: 4 },
-  guaranteeSub: { fontSize: 12, color: 'rgba(255,255,255,0.65)' },
-  stickyBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: Colors.white, paddingHorizontal: 20, paddingVertical: 16,
-    paddingBottom: 34,
-    borderTopWidth: 1, borderTopColor: Colors.sand,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    ...Shadows.strong,
-  },
-  stickyPrice: { fontSize: 22, fontWeight: '800', color: Colors.navy },
-  stickyUnit: { fontSize: 13, fontWeight: '500', color: Colors.gray },
-  stickyEarns: { fontSize: 11, color: Colors.teal, fontWeight: '600', marginTop: 2 },
-  stickyFree: { fontSize: 20, fontWeight: '800', color: Colors.emerald },
-  applyBtn: { backgroundColor: Colors.teal, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 16 },
-  applyBtnText: { color: Colors.white, fontSize: 16, fontWeight: '700' },
-  modalSafe: { flex: 1, backgroundColor: Colors.cream },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.sand,
-  },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.navy },
-  modalClose: { fontSize: 18, color: Colors.gray, padding: 4 },
-  modalBody: { padding: 20 },
-  modalLabel: { fontSize: 15, fontWeight: '700', color: Colors.navy, marginBottom: 4 },
-  modalHint: { fontSize: 13, color: Colors.gray, marginBottom: 12, lineHeight: 18 },
-  modalTextarea: {
-    borderWidth: 1.5, borderColor: Colors.sand, borderRadius: 14,
-    padding: 14, fontSize: 15, color: Colors.navy,
-    backgroundColor: Colors.white, minHeight: 140, textAlignVertical: 'top',
-  },
-  charCount: { fontSize: 12, color: Colors.grayLight, textAlign: 'right', marginTop: 4, marginBottom: 20 },
-  sendBtn: { backgroundColor: Colors.teal, borderRadius: 14, paddingVertical: 18, alignItems: 'center' },
-  sendBtnDisabled: { opacity: 0.4 },
-  sendBtnText: { color: Colors.white, fontSize: 16, fontWeight: '700' },
-  appliedState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
-  appliedEmoji: { fontSize: 60, marginBottom: 16 },
-  appliedTitle: { fontSize: 24, fontWeight: '800', color: Colors.navy, marginBottom: 8 },
-  appliedSub: { fontSize: 15, color: Colors.gray, textAlign: 'center' },
+  safe:             { flex: 1, backgroundColor: C.cream },
+  topBar:           { position: 'absolute', top: Platform.OS === 'ios' ? 50 : 16, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, zIndex: 10 },
+  topBtn:           { backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 20, width: 40, height: 40, alignItems: 'center', justifyContent: 'center', ...S.card },
+  topBtnText:       { fontSize: 20, color: C.navy },
+  heroWrap:         { position: 'relative', height: 280 },
+  hero:             { width: '100%', height: '100%' },
+  paidBadge:        { position: 'absolute', bottom: 14, left: 16, backgroundColor: '#10B981', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6 },
+  paidBadgeText:    { color: '#fff', fontWeight: '700', fontSize: 13 },
+  body:             { padding: 20, gap: 16 },
+  title:            { fontSize: 22, fontWeight: '800', color: C.navy, lineHeight: 28 },
+  location:         { fontSize: 14, color: C.gray },
+  datesCard:        { backgroundColor: C.white, borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', ...S.card },
+  dateBlock:        { alignItems: 'center', gap: 2 },
+  dateLabel:        { fontSize: 10, fontWeight: '700', color: C.gray, letterSpacing: 1 },
+  dateDay:          { fontSize: 32, fontWeight: '800', color: C.navy },
+  dateMonth:        { fontSize: 14, fontWeight: '600', color: C.teal },
+  dateYear:         { fontSize: 12, color: C.gray },
+  dateDivider:      { alignItems: 'center' },
+  dateDividerText:  { fontSize: 13, fontWeight: '700', color: C.gray, backgroundColor: C.grayPale, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  rateBlock:        { alignItems: 'center', borderLeftWidth: 1, borderLeftColor: C.sand, paddingLeft: 16 },
+  rateLabel:        { fontSize: 10, fontWeight: '700', color: C.gray, letterSpacing: 1 },
+  rateAmount:       { fontSize: 24, fontWeight: '800', color: '#10B981' },
+  rateBreak:        { fontSize: 12, color: C.gray },
+  section:          { gap: 10 },
+  sectionTitle:     { fontSize: 16, fontWeight: '700', color: C.navy },
+  sectionSubtitle:  { fontSize: 13, color: C.gray, marginTop: -6 },
+  petsRow:          { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  petChip:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.tealPale, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
+  petEmoji:         { fontSize: 18 },
+  petName:          { fontSize: 14, fontWeight: '600', color: C.tealDark },
+  ownerCard:        { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.white, borderRadius: 16, padding: 14, ...S.card },
+  ownerAvatar:      { width: 52, height: 52, borderRadius: 26 },
+  ownerName:        { fontSize: 15, fontWeight: '700', color: C.navy },
+  ownerRating:      { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  ownerRatingText:  { fontSize: 13, color: C.gray },
+  msgBtn:           { backgroundColor: C.tealPale, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  msgBtnText:       { fontSize: 13, fontWeight: '700', color: C.teal },
+  amenitiesRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  amenity:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.white, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, ...S.card },
+  amenityText:      { fontSize: 13, color: C.navy, fontWeight: '500' },
+  descText:         { fontSize: 14, color: C.gray, lineHeight: 22 },
+  addOnRow:         { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.white, borderRadius: 14, padding: 14, ...S.card },
+  addOnIcon:        { width: 44, height: 44, borderRadius: 12, backgroundColor: C.tealPale, alignItems: 'center', justifyContent: 'center' },
+  addOnLabel:       { fontSize: 14, fontWeight: '700', color: C.navy },
+  addOnDesc:        { fontSize: 12, color: C.gray, marginTop: 2 },
+  addOnRight:       { alignItems: 'center', gap: 6 },
+  addOnPrice:       { fontSize: 13, fontWeight: '700', color: '#10B981' },
+  addOnBtn:         { backgroundColor: C.grayPale, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1.5, borderColor: C.sand },
+  addOnBtnActive:   { backgroundColor: C.tealPale, borderColor: C.teal },
+  addOnBtnText:     { fontSize: 13, fontWeight: '600', color: C.gray },
+  addOnBtnTextActive: { color: C.tealDark },
+  appBar:           { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.white, borderRadius: 14, padding: 14, ...S.card },
+  appCount:         { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  appCountNum:      { fontSize: 28, fontWeight: '800', color: C.navy },
+  appCountLabel:    { fontSize: 13, color: C.gray },
+  appNote:          { fontSize: 13, color: C.gray },
+  stickyBar:        { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.sand, padding: 16, gap: 8 },
+  addOnSummary:     { fontSize: 13, color: '#10B981', fontWeight: '600', textAlign: 'center' },
+  applyBtn:         { backgroundColor: C.teal, borderRadius: 14, paddingVertical: 16, alignItems: 'center', ...S.strong },
+  applyBtnText:     { color: C.white, fontSize: 16, fontWeight: '700' },
+  appliedBanner:    { backgroundColor: '#D1FAE5', borderRadius: 14, padding: 14, alignItems: 'center' },
+  appliedText:      { fontSize: 14, color: '#065F46', fontWeight: '600', textAlign: 'center' },
+  modalSafe:        { flex: 1, backgroundColor: C.white },
+  modalHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: C.sand },
+  modalTitle:       { fontSize: 18, fontWeight: '700', color: C.navy },
+  modalClose:       { fontSize: 18, color: C.gray, padding: 4 },
+  modalBody:        { padding: 20, gap: 16 },
+  modalSubtitle:    { fontSize: 14, color: C.gray },
+  messageInput:     { backgroundColor: C.grayPale, borderRadius: 14, padding: 14, fontSize: 15, color: C.navy, minHeight: 140, textAlignVertical: 'top', borderWidth: 1, borderColor: C.sand },
+  addOnSummaryCard: { backgroundColor: C.tealPale, borderRadius: 14, padding: 14, gap: 6 },
+  addOnSummaryTitle:{ fontSize: 14, fontWeight: '700', color: C.navy },
+  addOnSummaryItem: { fontSize: 13, color: C.tealDark },
+  addOnSummaryTotal:{ fontSize: 14, fontWeight: '700', color: '#10B981', marginTop: 4 },
+  modalFooter:      { padding: 20, gap: 8, borderTopWidth: 1, borderTopColor: C.sand },
+  sendBtn:          { backgroundColor: C.teal, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  sendBtnDisabled:  { backgroundColor: C.grayLight },
+  sendBtnText:      { color: C.white, fontSize: 16, fontWeight: '700' },
+  sendHint:         { fontSize: 12, color: C.gray, textAlign: 'center' },
 })

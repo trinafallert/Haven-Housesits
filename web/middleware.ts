@@ -16,11 +16,31 @@ const AUTH_ROUTES = ['/login', '/signup']
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // ─── 0. Handle CORS preflight for API routes (mobile app support) ─────────
+  if (request.method === 'OPTIONS' && pathname.startsWith('/haven/api')) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '86400',
+      },
+    })
+  }
+
   // ─── 1. Add security headers to every response ───────────────────────────
   const response = NextResponse.next()
   Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
     response.headers.set(key, value)
   })
+
+  // Add CORS headers to API responses
+  if (pathname.startsWith('/haven/api')) {
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  }
 
   // ─── 2. Auth guard for protected routes ──────────────────────────────────
   const isProtected = PROTECTED_ROUTES.some((p) => pathname.startsWith(p))

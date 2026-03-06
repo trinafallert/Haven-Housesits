@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "web",
-    "mobile"
+    "web"
   ],
   "scripts": {
     "dev:web": "cd web && npm run dev",

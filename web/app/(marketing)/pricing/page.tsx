@@ -383,7 +383,7 @@ export default function PricingPage() {
             {
               icon: <HeartHandshake className="h-6 w-6" />,
               title: '30-day money back',
-              desc: 'Not happy with Haven in your first 30 days of a paid plan? We'll refund you, no questions asked.',
+              desc: "Not happy with Haven in your first 30 days of a paid plan? We'll refund you, no questions asked.",
             },
           ].map((item) => (
             <div key={item.title} className="card p-6 text-center">

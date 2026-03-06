@@ -1,173 +1,99 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ImageBackground } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native'
 import { useRouter } from 'expo-router'
-import { LinearGradient } from 'expo-linear-gradient'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
+import { useState } from 'react'
 
 const { width, height } = Dimensions.get('window')
 
-const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
+const SLIDES = [
+  {
+    emoji: '🌍',
+    title: 'House sit anywhere\nin the world',
+    sub:   'Thousands of listings across 130+ countries. Pet sits, vacant homes, paid sits, and more.',
+    bg:    Colors.teal,
+  },
+  {
+    emoji: '🐾',
+    title: 'Pets love it.\nOwners trust it.',
+    sub:   'Verified sitters, background checks, and a community of people who genuinely love animals.',
+    bg:    Colors.navy,
+  },
+  {
+    emoji: '💰',
+    title: 'Free stays or\nearning money',
+    sub:   'Browse free exchange sits or paid opportunities. You choose how you want to sit.',
+    bg:    '#10B981',
+  },
 ]
 
 export default function WelcomeScreen() {
-  const router = useRouter()
+  const router  = useRouter()
+  const [slide, setSlide] = useState(0)
+
+  const next = () => {
+    if (slide < SLIDES.length - 1) {
+      setSlide(s => s + 1)
+    } else {
+      router.push('/(auth)/signup')
+    }
+  }
+
+  const s = SLIDES[slide]
 
   return (
-    <View style={styles.container}>
-      <ImageBackground
-        source={{ uri: HERO_IMAGES[0] }}
-        style={styles.bg}
-        resizeMode="cover"
-      >
-        <LinearGradient
-          colors={['transparent', 'rgba(26,46,53,0.6)', 'rgba(26,46,53,0.97)']}
-          style={styles.gradient}
-        >
-          <SafeAreaView style={styles.safe}>
-            {/* Logo */}
-            <View style={styles.logoWrap}>
-              <View style={styles.logoCircle}>
-                <Text style={styles.logoEmoji}>🏡</Text>
-              </View>
-              <Text style={styles.logoText}>Haven</Text>
-            </View>
+    <View style={[styles.root, { backgroundColor: s.bg }]}>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.skipRow}>
+          <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+            <Text style={styles.skip}>Skip</Text>
+          </TouchableOpacity>
+        </View>
 
-            {/* Hero copy */}
-            <View style={styles.hero}>
-              <Text style={styles.tagline}>House sitting,{'\n'}done right.</Text>
-              <Text style={styles.sub}>
-                Free exchanges, paid sits, verified sitters.{'\n'}
-                Join thousands of travellers worldwide.
-              </Text>
+        <View style={styles.hero}>
+          <Text style={styles.emoji}>{s.emoji}</Text>
+          <Text style={styles.title}>{s.title}</Text>
+          <Text style={styles.sub}>{s.sub}</Text>
+        </View>
 
-              {/* Stats row */}
-              <View style={styles.statsRow}>
-                {[
-                  { value: '50k+', label: 'Sitters' },
-                  { value: '30k+', label: 'Listings' },
-                  { value: '98%', label: 'Happy sits' },
-                ].map((s) => (
-                  <View key={s.label} style={styles.stat}>
-                    <Text style={styles.statValue}>{s.value}</Text>
-                    <Text style={styles.statLabel}>{s.label}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+        {/* Dots */}
+        <View style={styles.dots}>
+          {SLIDES.map((_, i) => (
+            <View key={i} style={[styles.dot, i === slide && styles.dotActive]} />
+          ))}
+        </View>
 
-            {/* CTAs */}
-            <View style={styles.ctas}>
-              <TouchableOpacity
-                style={styles.btnPrimary}
-                onPress={() => router.push('/(auth)/signup')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.btnPrimaryText}>Get started free — 3 months</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.btnSecondary}
-                onPress={() => router.push('/(auth)/login')}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.btnSecondaryText}>I already have an account</Text>
-              </TouchableOpacity>
-
-              <Text style={styles.legal}>
-                By continuing you agree to our{' '}
-                <Text style={styles.link}>Terms</Text> &{' '}
-                <Text style={styles.link}>Privacy Policy</Text>
-              </Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </ImageBackground>
+        <View style={styles.footer}>
+          <TouchableOpacity style={styles.nextBtn} onPress={next}>
+            <Text style={styles.nextBtnText}>
+              {slide < SLIDES.length - 1 ? 'Next →' : 'Get started'}
+            </Text>
+          </TouchableOpacity>
+          {slide === SLIDES.length - 1 && (
+            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+              <Text style={styles.loginLink}>Already have an account? <Text style={{ fontWeight: '700' }}>Log in</Text></Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </SafeAreaView>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  bg: { flex: 1, width, height },
-  gradient: { flex: 1 },
-  safe: { flex: 1, paddingHorizontal: 24 },
-  logoWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingTop: 12,
-  },
-  logoCircle: {
-    width: 40, height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.teal,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoEmoji: { fontSize: 20 },
-  logoText: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.white,
-    letterSpacing: -0.5,
-  },
-  hero: { flex: 1, justifyContent: 'flex-end', paddingBottom: 32 },
-  tagline: {
-    fontSize: 42,
-    fontWeight: '800',
-    color: Colors.white,
-    lineHeight: 48,
-    letterSpacing: -1,
-    marginBottom: 12,
-  },
-  sub: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.75)',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 24,
-  },
-  stat: { alignItems: 'center' },
-  statValue: { fontSize: 22, fontWeight: '800', color: Colors.tealLight },
-  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 },
-  ctas: { paddingBottom: 8, gap: 12 },
-  btnPrimary: {
-    backgroundColor: Colors.teal,
-    borderRadius: 16,
-    paddingVertical: 18,
-    alignItems: 'center',
-    shadowColor: Colors.teal,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  btnPrimaryText: {
-    color: Colors.white,
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  btnSecondary: {
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.4)',
-    borderRadius: 16,
-    paddingVertical: 17,
-    alignItems: 'center',
-  },
-  btnSecondaryText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  legal: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.45)',
-    marginTop: 4,
-  },
-  link: { color: 'rgba(255,255,255,0.7)', textDecorationLine: 'underline' },
+  root:       { flex: 1 },
+  safe:       { flex: 1, paddingHorizontal: 28 },
+  skipRow:    { alignItems: 'flex-end', paddingTop: 12 },
+  skip:       { color: 'rgba(255,255,255,0.7)', fontSize: 15 },
+  hero:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 20 },
+  emoji:      { fontSize: 80 },
+  title:      { fontSize: 32, fontWeight: '800', color: '#fff', textAlign: 'center', lineHeight: 40 },
+  sub:        { fontSize: 16, color: 'rgba(255,255,255,0.85)', textAlign: 'center', lineHeight: 24 },
+  dots:       { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingBottom: 24 },
+  dot:        { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.4)' },
+  dotActive:  { width: 24, backgroundColor: '#fff' },
+  footer:     { gap: 16, paddingBottom: 32 },
+  nextBtn:    { backgroundColor: '#fff', borderRadius: 16, paddingVertical: 18, alignItems: 'center' },
+  nextBtnText:{ fontSize: 17, fontWeight: '700', color: Colors.navy },
+  loginLink:  { color: 'rgba(255,255,255,0.8)', textAlign: 'center', fontSize: 14 },
 })

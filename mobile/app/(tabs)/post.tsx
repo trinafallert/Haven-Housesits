@@ -1,404 +1,340 @@
 import { useState } from 'react'
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, Switch, Platform } from 'react-native'
-import { useRouter } from 'expo-router'
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, Switch, KeyboardAvoidingView, Platform,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 import { Colors, Shadows } from '@/constants/colors'
 
-const SIT_TYPES = [
-  { id: 'standard', label: 'Standard', desc: 'Free sit exchange', icon: '🏡', color: '#E0F2F1' },
-  { id: 'paid', label: 'Paid', desc: 'Compensate the sitter', icon: '💰', color: '#FEF3C7' },
-  { id: 'long-term', label: 'Long-term', desc: '3+ months', icon: '📅', color: '#EDE9FE' },
-  { id: 'vacant', label: 'Vacant home', desc: 'No pets, check-in only', icon: '🔑', color: '#FCE7F3' },
+const PET_OPTIONS = [
+  { key: 'DOG',    label: 'Dog',     icon: '🐕' },
+  { key: 'CAT',    label: 'Cat',     icon: '🐈' },
+  { key: 'BIRD',   label: 'Bird',    icon: '🦜' },
+  { key: 'FISH',   label: 'Fish',    icon: '🐠' },
+  { key: 'REPTILE',label: 'Reptile', icon: '🦎' },
+  { key: 'HORSE',  label: 'Horse',   icon: '🐴' },
+  { key: 'SMALL',  label: 'Small pet',icon: '🐹' },
 ]
 
-const PET_TYPES = [
-  { id: 'dogs', icon: '🐕', label: 'Dogs' },
-  { id: 'cats', icon: '🐈', label: 'Cats' },
-  { id: 'birds', icon: '🦜', label: 'Birds' },
-  { id: 'fish', icon: '🐠', label: 'Fish' },
-  { id: 'rabbits', icon: '🐇', label: 'Rabbits' },
-  { id: 'reptiles', icon: '🦎', label: 'Reptiles' },
-  { id: 'other', icon: '🐾', label: 'Other' },
+const HOME_TYPES = ['House', 'Apartment', 'Farm', 'Unique stay']
+
+const ADD_ON_OPTIONS = [
+  { id: 'deep_clean', icon: '🧹', label: 'Deep Clean',         price: 45 },
+  { id: 'pet_photos', icon: '📸', label: 'Pet Photo Updates',  price: 25 },
+  { id: 'grocery',    icon: '🛒', label: 'Grocery Stocking',   price: 30 },
+  { id: 'plant_care', icon: '🪴', label: 'Plant Care',         price: 15 },
 ]
 
-const STEPS = ['Sit type', 'Dates & location', 'Pets', 'Details']
+const STEPS = ['Sit type', 'Details', 'Pets & Home', 'Add-ons', 'Review']
 
-export default function PostSitScreen() {
+export default function PostListingScreen() {
   const router = useRouter()
   const [step, setStep] = useState(0)
-  const [sitType, setSitType] = useState<string | null>(null)
-  const [title, setTitle] = useState('')
-  const [location, setLocation] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [selectedPets, setSelectedPets] = useState<string[]>([])
-  const [petCount, setPetCount] = useState(1)
-  const [description, setDescription] = useState('')
-  const [amenities, setAmenities] = useState<string[]>([])
-  const [paidAmount, setPaidAmount] = useState('')
-  const [maxApplicants, setMaxApplicants] = useState(10)
-  const [remoteWorkFriendly, setRemoteWorkFriendly] = useState(false)
-  const [dogWalkRequired, setDogWalkRequired] = useState(false)
 
-  const AMENITY_LIST = ['WiFi', 'Pool', 'Garden', 'Parking', 'EV Charger', 'Hot tub', 'Gym', 'Piano', 'Sea view', 'Mountain view']
+  // Step 0 — Sit type
+  const [sitType,    setSitType]    = useState<'FREE' | 'PAID' | 'VACANT'>('FREE')
+  const [isPaid,     setIsPaid]     = useState(false)
+  const [dailyRate,  setDailyRate]  = useState('')
 
-  const togglePet = (id: string) => {
-    setSelectedPets(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
-  }
+  // Step 1 — Details
+  const [title,       setTitle]      = useState('')
+  const [location,    setLocation]   = useState('')
+  const [startDate,   setStartDate]  = useState('')
+  const [endDate,     setEndDate]    = useState('')
+  const [description, setDesc]       = useState('')
 
-  const toggleAmenity = (a: string) => {
-    setAmenities(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])
-  }
+  // Step 2 — Pets & Home
+  const [pets,      setPets]      = useState<string[]>([])
+  const [homeType,  setHomeType]  = useState('House')
+  const [hasWifi,   setHasWifi]   = useState(true)
+  const [hasCar,    setHasCar]    = useState(false)
+
+  // Step 3 — Add-ons
+  const [enabledAddOns, setEnabledAddOns] = useState<string[]>([])
+
+  const togglePet = (k: string) => setPets(p => p.includes(k) ? p.filter(x => x !== k) : [...p, k])
+  const toggleAddOn = (k: string) => setEnabledAddOns(p => p.includes(k) ? p.filter(x => x !== k) : [...p, k])
 
   const canNext = () => {
-    if (step === 0) return !!sitType
     if (step === 1) return title.length > 3 && location.length > 2 && startDate && endDate
-    if (step === 2) return selectedPets.length > 0
-    return description.length >= 50
+    return true
+  }
+
+  const stepContent = () => {
+    switch (step) {
+      case 0: return (
+        <View style={styles.stepBody}>
+          <Text style={styles.stepTitle}>What kind of sit is this?</Text>
+          <Text style={styles.stepSub}>Choose how you want to offer your sit</Text>
+
+          {[
+            { key: 'FREE',   icon: '🤝', label: 'Free exchange',  desc: 'Sitter stays free in exchange for pet care' },
+            { key: 'PAID',   icon: '💰', label: 'Paid sit',       desc: 'Pay a sitter a daily rate for their help' },
+            { key: 'VACANT', icon: '🏠', label: 'Vacant house',   desc: 'No pets — just need someone to watch your home' },
+          ].map(t => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.typeCard, sitType === t.key && styles.typeCardActive]}
+              onPress={() => { setSitType(t.key as any); setIsPaid(t.key === 'PAID') }}
+            >
+              <Text style={styles.typeIcon}>{t.icon}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.typeLabel, sitType === t.key && styles.typeLabelActive]}>{t.label}</Text>
+                <Text style={styles.typeDesc}>{t.desc}</Text>
+              </View>
+              <View style={[styles.radioCircle, sitType === t.key && styles.radioCircleActive]}>
+                {sitType === t.key && <View style={styles.radioDot} />}
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {isPaid && (
+            <View style={styles.fieldWrap}>
+              <Text style={styles.fieldLabel}>Daily rate ($)</Text>
+              <TextInput
+                style={styles.input}
+                value={dailyRate}
+                onChangeText={setDailyRate}
+                keyboardType="numeric"
+                placeholder="e.g. 75"
+                placeholderTextColor={Colors.grayLight}
+              />
+            </View>
+          )}
+        </View>
+      )
+
+      case 1: return (
+        <View style={styles.stepBody}>
+          <Text style={styles.stepTitle}>Listing details</Text>
+          <View style={styles.fieldWrap}>
+            <Text style={styles.fieldLabel}>Listing title</Text>
+            <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="e.g. Cozy beachside home with two cats" placeholderTextColor={Colors.grayLight} />
+          </View>
+          <View style={styles.fieldWrap}>
+            <Text style={styles.fieldLabel}>Location</Text>
+            <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="City, State, Country" placeholderTextColor={Colors.grayLight} />
+          </View>
+          <View style={styles.dateRow}>
+            <View style={[styles.fieldWrap, { flex: 1 }]}>
+              <Text style={styles.fieldLabel}>Start date</Text>
+              <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} placeholder="Mar 15, 2026" placeholderTextColor={Colors.grayLight} />
+            </View>
+            <View style={[styles.fieldWrap, { flex: 1 }]}>
+              <Text style={styles.fieldLabel}>End date</Text>
+              <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} placeholder="Apr 10, 2026" placeholderTextColor={Colors.grayLight} />
+            </View>
+          </View>
+          <View style={styles.fieldWrap}>
+            <Text style={styles.fieldLabel}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={description}
+              onChangeText={setDesc}
+              multiline
+              numberOfLines={4}
+              placeholder="Tell sitters about your home, pets, neighbourhood..."
+              placeholderTextColor={Colors.grayLight}
+            />
+          </View>
+        </View>
+      )
+
+      case 2: return (
+        <View style={styles.stepBody}>
+          <Text style={styles.stepTitle}>Pets & home details</Text>
+
+          <Text style={styles.fieldLabel}>Pets that need care</Text>
+          <View style={styles.iconGrid}>
+            {PET_OPTIONS.map(p => (
+              <TouchableOpacity
+                key={p.key}
+                style={[styles.iconItem, pets.includes(p.key) && styles.iconItemActive]}
+                onPress={() => togglePet(p.key)}
+              >
+                <Text style={styles.iconEmoji}>{p.icon}</Text>
+                <Text style={[styles.iconLabel, pets.includes(p.key) && styles.iconLabelActive]}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Home type</Text>
+          <View style={styles.chipRow}>
+            {HOME_TYPES.map(h => (
+              <TouchableOpacity key={h} style={[styles.chip, homeType === h && styles.chipActive]} onPress={() => setHomeType(h)}>
+                <Text style={[styles.chipText, homeType === h && styles.chipTextActive]}>{h}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Amenities</Text>
+          {[
+            { label: '📶 High-speed wifi', state: hasWifi, set: setHasWifi },
+            { label: '🚗 Car available for sitter', state: hasCar, set: setHasCar },
+          ].map(({ label, state, set }) => (
+            <View key={label} style={styles.toggleRow}>
+              <Text style={styles.toggleLabel}>{label}</Text>
+              <Switch value={state} onValueChange={set} trackColor={{ false: Colors.sand, true: Colors.teal }} thumbColor={Colors.white} />
+            </View>
+          ))}
+        </View>
+      )
+
+      case 3: return (
+        <View style={styles.stepBody}>
+          <Text style={styles.stepTitle}>Add-ons</Text>
+          <Text style={styles.stepSub}>Let sitters offer these paid extras. You'll see the cost upfront.</Text>
+          {ADD_ON_OPTIONS.map(a => (
+            <View key={a.id} style={styles.addOnRow}>
+              <View style={styles.addOnIcon}><Text style={{ fontSize: 22 }}>{a.icon}</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.addOnLabel}>{a.label}</Text>
+                <Text style={styles.addOnPrice}>+${a.price}</Text>
+              </View>
+              <Switch
+                value={enabledAddOns.includes(a.id)}
+                onValueChange={() => toggleAddOn(a.id)}
+                trackColor={{ false: Colors.sand, true: Colors.teal }}
+                thumbColor={Colors.white}
+              />
+            </View>
+          ))}
+        </View>
+      )
+
+      case 4: return (
+        <View style={styles.stepBody}>
+          <Text style={styles.stepTitle}>Review & publish</Text>
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewLabel}>Sit type</Text>
+            <Text style={styles.reviewValue}>{sitType}{isPaid ? ` · $${dailyRate}/day` : ''}</Text>
+          </View>
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewLabel}>Title</Text>
+            <Text style={styles.reviewValue}>{title || '—'}</Text>
+          </View>
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewLabel}>Location</Text>
+            <Text style={styles.reviewValue}>{location || '—'}</Text>
+          </View>
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewLabel}>Dates</Text>
+            <Text style={styles.reviewValue}>{startDate} → {endDate}</Text>
+          </View>
+          <View style={styles.reviewCard}>
+            <Text style={styles.reviewLabel}>Pets</Text>
+            <Text style={styles.reviewValue}>{pets.length > 0 ? pets.map(p => PET_OPTIONS.find(x=>x.key===p)?.icon).join(' ') : 'None'}</Text>
+          </View>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoText}>🎉 Your listing will be live immediately and visible to thousands of sitters!</Text>
+          </View>
+        </View>
+      )
+
+      default: return null
+    }
   }
 
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Post a sit</Text>
-        <Text style={styles.stepLabel}>Step {step + 1} of {STEPS.length}</Text>
+        {step > 0
+          ? <TouchableOpacity onPress={() => setStep(s => s - 1)}><Text style={styles.backBtn}>←</Text></TouchableOpacity>
+          : <View style={{ width: 40 }} />
+        }
+        <Text style={styles.headerTitle}>Post a sit</Text>
+        <TouchableOpacity onPress={() => router.back()}><Text style={styles.cancelBtn}>Cancel</Text></TouchableOpacity>
       </View>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <View style={styles.progressWrap}>
-        <View style={[styles.progressFill, { width: `${((step + 1) / STEPS.length) * 100}%` as any }]} />
-      </View>
-
-      {/* Step tabs */}
-      <View style={styles.stepTabs}>
         {STEPS.map((s, i) => (
-          <TouchableOpacity
-            key={s}
-            style={[styles.stepTab, i === step && styles.stepTabActive]}
-            onPress={() => i < step && setStep(i)}
-          >
-            <Text style={[styles.stepTabText, i === step && styles.stepTabTextActive]}>{s}</Text>
-          </TouchableOpacity>
+          <View key={i} style={[styles.progressStep, i <= step && styles.progressStepActive]} />
         ))}
       </View>
+      <Text style={styles.progressLabel}>{STEPS[step]} · Step {step + 1} of {STEPS.length}</Text>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+          {stepContent()}
+        </ScrollView>
 
-        {/* ─── Step 0: Sit type ─── */}
-        {step === 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>What type of sit is this?</Text>
-            <Text style={styles.sectionSub}>This helps sitters find the right fit.</Text>
-            <View style={styles.typeGrid}>
-              {SIT_TYPES.map(t => (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[styles.typeCard, { backgroundColor: t.color }, sitType === t.id && styles.typeCardSelected]}
-                  onPress={() => setSitType(t.id)}
-                >
-                  <Text style={styles.typeIcon}>{t.icon}</Text>
-                  <Text style={styles.typeLabel}>{t.label}</Text>
-                  <Text style={styles.typeDesc}>{t.desc}</Text>
-                  {sitType === t.id && (
-                    <View style={styles.typeCheck}>
-                      <Text style={{ color: Colors.white, fontSize: 10, fontWeight: '700' }}>✓</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {sitType === 'paid' && (
-              <View style={styles.paidSection}>
-                <Text style={styles.fieldLabel}>Compensation per day (USD)</Text>
-                <View style={styles.inputRow}>
-                  <Text style={styles.currencySymbol}>$</Text>
-                  <TextInput
-                    style={styles.inputInline}
-                    value={paidAmount}
-                    onChangeText={setPaidAmount}
-                    placeholder="25"
-                    keyboardType="numeric"
-                    placeholderTextColor={Colors.grayLight}
-                  />
-                </View>
-                <Text style={styles.fieldHint}>Haven fee of 8% applies. Most paid sits range $20–$60/day.</Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* ─── Step 1: Dates & location ─── */}
-        {step === 1 && (
-          <View>
-            <Text style={styles.sectionTitle}>Where and when?</Text>
-
-            <Text style={styles.fieldLabel}>Listing title</Text>
-            <TextInput
-              style={styles.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder="e.g. Cozy Bungalow in Austin — 2 friendly dogs"
-              placeholderTextColor={Colors.grayLight}
-              maxLength={80}
-            />
-            <Text style={styles.charCount}>{title.length}/80</Text>
-
-            <Text style={styles.fieldLabel}>Location</Text>
-            <TextInput
-              style={styles.input}
-              value={location}
-              onChangeText={setLocation}
-              placeholder="City, State / City, Country"
-              placeholderTextColor={Colors.grayLight}
-            />
-            <Text style={styles.fieldHint}>We show a neighbourhood pin — your exact address stays private until confirmed.</Text>
-
-            <View style={styles.dateRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>Start date</Text>
-                <TextInput
-                  style={styles.input}
-                  value={startDate}
-                  onChangeText={setStartDate}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={Colors.grayLight}
-                />
-              </View>
-              <View style={{ width: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.fieldLabel}>End date</Text>
-                <TextInput
-                  style={styles.input}
-                  value={endDate}
-                  onChangeText={setEndDate}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={Colors.grayLight}
-                />
-              </View>
-            </View>
-
-            {/* Max applicants */}
-            <Text style={styles.fieldLabel}>Max applicants: <Text style={{ color: Colors.teal, fontWeight: '700' }}>{maxApplicants}</Text></Text>
-            <View style={styles.sliderRow}>
-              <TouchableOpacity style={styles.sliderBtn} onPress={() => setMaxApplicants(v => Math.max(5, v - 1))}>
-                <Text style={styles.sliderBtnText}>−</Text>
-              </TouchableOpacity>
-              <View style={styles.sliderTrack}>
-                <View style={[styles.sliderFill, { width: `${((maxApplicants - 5) / 10) * 100}%` as any }]} />
-              </View>
-              <TouchableOpacity style={styles.sliderBtn} onPress={() => setMaxApplicants(v => Math.min(15, v + 1))}>
-                <Text style={styles.sliderBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.fieldHint}>Listing closes automatically when this limit is reached (5–15).</Text>
-          </View>
-        )}
-
-        {/* ─── Step 2: Pets ─── */}
-        {step === 2 && (
-          <View>
-            <Text style={styles.sectionTitle}>Tell us about your pets</Text>
-
-            <Text style={styles.fieldLabel}>Pet types (select all that apply)</Text>
-            <View style={styles.petGrid}>
-              {PET_TYPES.map(p => (
-                <TouchableOpacity
-                  key={p.id}
-                  style={[styles.petChip, selectedPets.includes(p.id) && styles.petChipSelected]}
-                  onPress={() => togglePet(p.id)}
-                >
-                  <Text style={styles.petChipIcon}>{p.icon}</Text>
-                  <Text style={[styles.petChipLabel, selectedPets.includes(p.id) && styles.petChipLabelSelected]}>
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.fieldLabel}>Number of pets</Text>
-            <View style={styles.counterRow}>
-              <TouchableOpacity style={styles.counterBtn} onPress={() => setPetCount(v => Math.max(1, v - 1))}>
-                <Text style={styles.counterBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={styles.counterVal}>{petCount}</Text>
-              <TouchableOpacity style={styles.counterBtn} onPress={() => setPetCount(v => v + 1)}>
-                <Text style={styles.counterBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            {selectedPets.includes('dogs') && (
-              <View style={styles.toggleRow}>
-                <View>
-                  <Text style={styles.toggleLabel}>Daily walks required?</Text>
-                  <Text style={styles.toggleSub}>Sitters with confirmed walk experience are prioritised</Text>
-                </View>
-                <Switch
-                  value={dogWalkRequired}
-                  onValueChange={setDogWalkRequired}
-                  trackColor={{ true: Colors.teal, false: Colors.sand }}
-                  thumbColor={Colors.white}
-                />
-              </View>
-            )}
-
-            <View style={styles.toggleRow}>
-              <View>
-                <Text style={styles.toggleLabel}>Remote work friendly?</Text>
-                <Text style={styles.toggleSub}>Fast WiFi + quiet workspace available</Text>
-              </View>
-              <Switch
-                value={remoteWorkFriendly}
-                onValueChange={setRemoteWorkFriendly}
-                trackColor={{ true: Colors.teal, false: Colors.sand }}
-                thumbColor={Colors.white}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* ─── Step 3: Details ─── */}
-        {step === 3 && (
-          <View>
-            <Text style={styles.sectionTitle}>Add the finishing details</Text>
-
-            <Text style={styles.fieldLabel}>Description <Text style={styles.required}>*</Text></Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Describe your home, neighbourhood, pets' personalities and what you're looking for in a sitter..."
-              placeholderTextColor={Colors.grayLight}
-              multiline
-              textAlignVertical="top"
-              maxLength={2000}
-            />
-            <Text style={[styles.charCount, description.length < 50 && styles.charCountWarn]}>
-              {description.length}/2000 {description.length < 50 ? `(min 50)` : '✓'}
-            </Text>
-
-            <Text style={styles.fieldLabel}>Home amenities</Text>
-            <View style={styles.amenityGrid}>
-              {AMENITY_LIST.map(a => (
-                <TouchableOpacity
-                  key={a}
-                  style={[styles.amenityChip, amenities.includes(a) && styles.amenityChipSelected]}
-                  onPress={() => toggleAmenity(a)}
-                >
-                  <Text style={[styles.amenityText, amenities.includes(a) && styles.amenityTextSelected]}>{a}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={styles.previewBox}>
-              <Text style={styles.previewTitle}>📋 Listing preview</Text>
-              <Text style={styles.previewItem}>Type: <Text style={styles.previewVal}>{sitType ? SIT_TYPES.find(t => t.id === sitType)?.label : '—'}</Text></Text>
-              <Text style={styles.previewItem}>Title: <Text style={styles.previewVal}>{title || '—'}</Text></Text>
-              <Text style={styles.previewItem}>Location: <Text style={styles.previewVal}>{location || '—'}</Text></Text>
-              <Text style={styles.previewItem}>Dates: <Text style={styles.previewVal}>{startDate && endDate ? `${startDate} → ${endDate}` : '—'}</Text></Text>
-              <Text style={styles.previewItem}>Pets: <Text style={styles.previewVal}>{selectedPets.length ? selectedPets.map(p => PET_TYPES.find(x => x.id === p)?.icon).join(' ') : '—'}</Text></Text>
-            </View>
-          </View>
-        )}
-
-        {/* Bottom CTA */}
-        <View style={styles.ctaRow}>
-          {step > 0 && (
-            <TouchableOpacity style={styles.backBtn} onPress={() => setStep(s => s - 1)}>
-              <Text style={styles.backBtnText}>← Back</Text>
+        <View style={styles.footer}>
+          {step < STEPS.length - 1 ? (
+            <TouchableOpacity
+              style={[styles.nextBtn, !canNext() && styles.nextBtnDisabled]}
+              disabled={!canNext()}
+              onPress={() => setStep(s => s + 1)}
+            >
+              <Text style={styles.nextBtnText}>Continue →</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.publishBtn} onPress={() => router.back()}>
+              <Text style={styles.publishBtnText}>🚀 Publish listing</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            style={[styles.nextBtn, !canNext() && styles.nextBtnDisabled, step > 0 && { flex: 1 }]}
-            onPress={() => {
-              if (!canNext()) return
-              if (step < STEPS.length - 1) {
-                setStep(s => s + 1)
-              } else {
-                // Submit listing
-                router.replace('/(tabs)/search')
-              }
-            }}
-            disabled={!canNext()}
-          >
-            <Text style={styles.nextBtnText}>
-              {step === STEPS.length - 1 ? '🚀 Publish listing' : 'Continue →'}
-            </Text>
-          </TouchableOpacity>
         </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
 
+const C = Colors, S = Shadows
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.cream },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 },
-  title: { fontSize: 26, fontWeight: '800', color: Colors.navy, letterSpacing: -0.5 },
-  stepLabel: { fontSize: 13, fontWeight: '600', color: Colors.teal },
-  progressWrap: { height: 4, backgroundColor: Colors.sand, marginHorizontal: 20, borderRadius: 2, overflow: 'hidden', marginBottom: 12 },
-  progressFill: { height: '100%', backgroundColor: Colors.teal, borderRadius: 2 },
-  stepTabs: { flexDirection: 'row', paddingHorizontal: 20, gap: 6, marginBottom: 16 },
-  stepTab: { flex: 1, paddingVertical: 6, borderRadius: 8, backgroundColor: Colors.sand, alignItems: 'center' },
-  stepTabActive: { backgroundColor: Colors.teal },
-  stepTabText: { fontSize: 10, fontWeight: '600', color: Colors.gray },
-  stepTabTextActive: { color: Colors.white },
-  scroll: { paddingHorizontal: 20, paddingBottom: 20 },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: Colors.navy, marginBottom: 4, letterSpacing: -0.3 },
-  sectionSub: { fontSize: 14, color: Colors.gray, marginBottom: 16 },
-  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-  typeCard: { width: '47%', borderRadius: 16, padding: 16, position: 'relative', borderWidth: 2, borderColor: 'transparent' },
-  typeCardSelected: { borderColor: Colors.teal },
-  typeIcon: { fontSize: 28, marginBottom: 8 },
-  typeLabel: { fontSize: 15, fontWeight: '800', color: Colors.navy, marginBottom: 2 },
-  typeDesc: { fontSize: 12, color: Colors.gray },
-  typeCheck: { position: 'absolute', top: 10, right: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: Colors.teal, alignItems: 'center', justifyContent: 'center' },
-  paidSection: { backgroundColor: Colors.white, borderRadius: 16, padding: 16, ...Shadows.card },
-  fieldLabel: { fontSize: 13, fontWeight: '700', color: Colors.navy, marginBottom: 6, marginTop: 14 },
-  fieldHint: { fontSize: 11, color: Colors.grayLight, marginTop: 4, lineHeight: 16 },
-  required: { color: Colors.red },
-  input: { backgroundColor: Colors.white, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: Colors.navy, borderWidth: 1, borderColor: Colors.sand, ...Shadows.card },
-  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 12, borderWidth: 1, borderColor: Colors.sand, paddingHorizontal: 14, ...Shadows.card },
-  currencySymbol: { fontSize: 16, fontWeight: '700', color: Colors.navy, marginRight: 4 },
-  inputInline: { flex: 1, paddingVertical: 12, fontSize: 14, color: Colors.navy },
-  textArea: { minHeight: 120, paddingTop: 12 },
-  charCount: { fontSize: 11, color: Colors.grayLight, textAlign: 'right', marginTop: 4 },
-  charCountWarn: { color: Colors.red },
-  dateRow: { flexDirection: 'row', marginTop: 4 },
-  sliderRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
-  sliderBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.tealPale, alignItems: 'center', justifyContent: 'center' },
-  sliderBtnText: { fontSize: 18, fontWeight: '700', color: Colors.teal },
-  sliderTrack: { flex: 1, height: 6, backgroundColor: Colors.sand, borderRadius: 3, overflow: 'hidden' },
-  sliderFill: { height: '100%', backgroundColor: Colors.teal, borderRadius: 3 },
-  petGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  petChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.sand },
-  petChipSelected: { borderColor: Colors.teal, backgroundColor: Colors.tealPale },
-  petChipIcon: { fontSize: 16 },
-  petChipLabel: { fontSize: 13, fontWeight: '600', color: Colors.gray },
-  petChipLabelSelected: { color: Colors.teal },
-  counterRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginVertical: 8 },
-  counterBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: Colors.tealPale, alignItems: 'center', justifyContent: 'center' },
-  counterBtnText: { fontSize: 20, fontWeight: '700', color: Colors.teal },
-  counterVal: { fontSize: 22, fontWeight: '800', color: Colors.navy, minWidth: 30, textAlign: 'center' },
-  toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginTop: 10, ...Shadows.card },
-  toggleLabel: { fontSize: 14, fontWeight: '700', color: Colors.navy },
-  toggleSub: { fontSize: 11, color: Colors.gray, marginTop: 2 },
-  amenityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  amenityChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, backgroundColor: Colors.white, borderWidth: 1.5, borderColor: Colors.sand },
-  amenityChipSelected: { borderColor: Colors.teal, backgroundColor: Colors.tealPale },
-  amenityText: { fontSize: 13, fontWeight: '600', color: Colors.gray },
-  amenityTextSelected: { color: Colors.teal },
-  previewBox: { backgroundColor: Colors.white, borderRadius: 14, padding: 14, marginTop: 8, borderWidth: 1, borderColor: Colors.sand },
-  previewTitle: { fontSize: 13, fontWeight: '700', color: Colors.navy, marginBottom: 8 },
-  previewItem: { fontSize: 12, color: Colors.gray, marginBottom: 3 },
-  previewVal: { color: Colors.navy, fontWeight: '600' },
-  ctaRow: { flexDirection: 'row', gap: 10, marginTop: 24 },
-  backBtn: { paddingVertical: 16, paddingHorizontal: 20, borderRadius: 14, borderWidth: 1.5, borderColor: Colors.sand, backgroundColor: Colors.white },
-  backBtnText: { fontSize: 15, fontWeight: '700', color: Colors.navy },
-  nextBtn: { flex: 1, backgroundColor: Colors.teal, borderRadius: 14, paddingVertical: 16, alignItems: 'center', ...Shadows.card },
-  nextBtnDisabled: { backgroundColor: Colors.grayLight },
-  nextBtnText: { fontSize: 15, fontWeight: '800', color: Colors.white },
+  safe:               { flex: 1, backgroundColor: C.cream },
+  header:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.sand },
+  backBtn:            { fontSize: 22, color: C.navy, padding: 4 },
+  headerTitle:        { fontSize: 17, fontWeight: '700', color: C.navy },
+  cancelBtn:          { fontSize: 15, color: C.gray },
+  progressWrap:       { flexDirection: 'row', gap: 4, paddingHorizontal: 16, paddingTop: 12 },
+  progressStep:       { flex: 1, height: 4, borderRadius: 2, backgroundColor: C.sand },
+  progressStepActive: { backgroundColor: C.teal },
+  progressLabel:      { fontSize: 12, color: C.gray, paddingHorizontal: 16, paddingTop: 6, marginBottom: 4 },
+  stepBody:           { padding: 20, gap: 14 },
+  stepTitle:          { fontSize: 20, fontWeight: '800', color: C.navy },
+  stepSub:            { fontSize: 14, color: C.gray, marginTop: -8 },
+  typeCard:           { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, borderWidth: 1.5, borderColor: C.sand, backgroundColor: C.white },
+  typeCardActive:     { borderColor: C.teal, backgroundColor: C.tealPale },
+  typeIcon:           { fontSize: 28 },
+  typeLabel:          { fontSize: 15, fontWeight: '700', color: C.navy },
+  typeLabelActive:    { color: C.tealDark },
+  typeDesc:           { fontSize: 13, color: C.gray, marginTop: 2 },
+  radioCircle:        { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: C.sand, alignItems: 'center', justifyContent: 'center' },
+  radioCircleActive:  { borderColor: C.teal },
+  radioDot:           { width: 10, height: 10, borderRadius: 5, backgroundColor: C.teal },
+  fieldWrap:          { gap: 6 },
+  fieldLabel:         { fontSize: 14, fontWeight: '600', color: C.navy },
+  input:              { backgroundColor: C.white, borderRadius: 12, padding: 12, fontSize: 15, color: C.navy, borderWidth: 1, borderColor: C.sand },
+  textArea:           { minHeight: 100, textAlignVertical: 'top' },
+  dateRow:            { flexDirection: 'row', gap: 12 },
+  iconGrid:           { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  iconItem:           { alignItems: 'center', width: 76, padding: 10, borderRadius: 12, borderWidth: 1.5, borderColor: C.sand, backgroundColor: C.white, gap: 4 },
+  iconItemActive:     { borderColor: C.teal, backgroundColor: C.tealPale },
+  iconEmoji:          { fontSize: 24 },
+  iconLabel:          { fontSize: 11, color: C.gray, textAlign: 'center' },
+  iconLabelActive:    { color: C.tealDark, fontWeight: '700' },
+  chipRow:            { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip:               { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: C.sand, backgroundColor: C.white },
+  chipActive:         { borderColor: C.teal, backgroundColor: C.tealPale },
+  chipText:           { fontSize: 14, color: C.gray },
+  chipTextActive:     { color: C.tealDark, fontWeight: '700' },
+  toggleRow:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: C.grayPale },
+  toggleLabel:        { fontSize: 15, color: C.navy },
+  addOnRow:           { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.white, borderRadius: 14, padding: 14, ...S.card },
+  addOnIcon:          { width: 44, height: 44, borderRadius: 12, backgroundColor: C.tealPale, alignItems: 'center', justifyContent: 'center' },
+  addOnLabel:         { fontSize: 14, fontWeight: '700', color: C.navy },
+  addOnPrice:         { fontSize: 13, color: '#10B981', fontWeight: '600' },
+  reviewCard:         { backgroundColor: C.white, borderRadius: 12, padding: 14, flexDirection: 'row', justifyContent: 'space-between', ...S.card },
+  reviewLabel:        { fontSize: 14, color: C.gray },
+  reviewValue:        { fontSize: 14, fontWeight: '600', color: C.navy },
+  infoBox:            { backgroundColor: C.tealPale, borderRadius: 14, padding: 14 },
+  infoText:           { fontSize: 14, color: C.tealDark },
+  footer:             { padding: 20, borderTopWidth: 1, borderTopColor: C.sand, backgroundColor: C.white },
+  nextBtn:            { backgroundColor: C.teal, borderRadius: 14, paddingVertical: 16, alignItems: 'center', ...S.card },
+  nextBtnDisabled:    { backgroundColor: C.grayLight },
+  nextBtnText:        { color: C.white, fontSize: 16, fontWeight: '700' },
+  publishBtn:         { backgroundColor: C.navy, borderRadius: 14, paddingVertical: 16, alignItems: 'center', ...S.strong },
+  publishBtnText:     { color: C.white, fontSize: 16, fontWeight: '700' },
 })

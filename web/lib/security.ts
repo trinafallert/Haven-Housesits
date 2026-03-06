@@ -16,11 +16,40 @@ import crypto from 'crypto'
 // ─── Auth guard ────────────────────────────────────────────────────────────────
 
 export async function requireAuth(req: NextRequest) {
+  // 1. Try standard NextAuth JWT cookie (web)
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token) {
-    return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), user: null }
+  if (token) return { error: null, user: token }
+
+  // 2. Try Bearer token (mobile apps)
+  const authHeader = req.headers.get('authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    const bearerToken = authHeader.slice(7)
+    try {
+      const jwt = require('jsonwebtoken')
+      const decoded = jwt.verify(bearerToken, process.env.NEXTAUTH_SECRET!) as any
+      return { error: null, user: decoded }
+    } catch {
+      // fall through to 401
+    }
   }
-  return { error: null, user: token }
+
+  return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), user: null }
+}
+
+// ─── CORS headers for mobile ──────────────────────────────────────────────────
+export function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  }
+}
+
+export function handleCors(req: NextRequest) {
+  if (req.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 204, headers: corsHeaders() })
+  }
+  return null
 }
 
 // ─── Rate limiting ─────────────────────────────────────────────────────────────

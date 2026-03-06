@@ -479,26 +479,70 @@ export default function HomePage() {
       </section>
 
       {/* ── APP DOWNLOAD ──────────────────────────────────────────────────── */}
-      <section className="py-16 bg-haven-cream-dark">
-        <div className="container-haven flex flex-col md:flex-row items-center justify-between gap-8">
-          <div>
-            <h2 className="font-display text-3xl font-bold text-haven-navy mb-3">
+      <section className="py-20 bg-haven-navy overflow-hidden">
+        <div className="container-haven">
+          <div className="text-center mb-14">
+            <Badge className="mb-4 bg-haven-teal/20 text-haven-teal-light border-0">
+              <Globe className="h-3 w-3" /> Available on iOS &amp; Android
+            </Badge>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-4">
               Take Haven everywhere
             </h2>
-            <p className="text-haven-gray mb-6">
-              Same login, same sits — on iOS and Android. Browse, apply, message, and manage
+            <p className="text-white/60 max-w-xl mx-auto text-lg">
+              Same login, same sits — browse, apply, message, and manage
               your sits from your phone.
             </p>
-            <div className="flex gap-3">
-              <Link href="/download/ios" className="inline-flex items-center gap-2 bg-haven-navy text-white px-5 py-3 rounded-2xl text-sm font-semibold hover:bg-haven-navy-light transition-colors">
-                <span className="text-xl">🍎</span> App Store
-              </Link>
-              <Link href="/download/android" className="inline-flex items-center gap-2 bg-haven-navy text-white px-5 py-3 rounded-2xl text-sm font-semibold hover:bg-haven-navy-light transition-colors">
-                <span className="text-xl">🤖</span> Google Play
-              </Link>
-            </div>
           </div>
-          <div className="text-8xl">📱</div>
+
+          {/* App screenshots */}
+          <div className="flex justify-center gap-4 md:gap-6 mb-12 overflow-x-auto pb-4">
+            {[
+              { src: '/screenshots/screen-search.png', label: 'Browse sits' },
+              { src: '/screenshots/screen-listing.png', label: 'Listing detail' },
+              { src: '/screenshots/screen-inbox.png', label: 'Messaging' },
+              { src: '/screenshots/screen-profile.png', label: 'Your profile' },
+            ].map((screen, i) => (
+              <div
+                key={screen.src}
+                className="flex-shrink-0 flex flex-col items-center gap-3"
+                style={{ transform: i % 2 === 1 ? 'translateY(24px)' : 'translateY(0)' }}
+              >
+                {/* Phone frame */}
+                <div className="relative w-[140px] md:w-[160px]">
+                  <div className="rounded-[28px] border-[3px] border-white/20 bg-black shadow-2xl overflow-hidden">
+                    <div className="bg-black h-5 flex items-center justify-center">
+                      <div className="w-12 h-1.5 bg-white/20 rounded-full" />
+                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/haven${screen.src}`}
+                      alt={screen.label}
+                      className="w-full block"
+                    />
+                    <div className="bg-black h-4" />
+                  </div>
+                </div>
+                <span className="text-white/50 text-xs font-medium">{screen.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Link href="/download/ios" className="inline-flex items-center gap-3 bg-white text-haven-navy px-6 py-3.5 rounded-2xl text-sm font-bold hover:bg-haven-cream transition-colors shadow-lg">
+              <span className="text-2xl">🍎</span>
+              <div className="text-left">
+                <div className="text-xs text-haven-gray font-normal">Download on the</div>
+                <div>App Store</div>
+              </div>
+            </Link>
+            <Link href="/download/android" className="inline-flex items-center gap-3 bg-white text-haven-navy px-6 py-3.5 rounded-2xl text-sm font-bold hover:bg-haven-cream transition-colors shadow-lg">
+              <span className="text-2xl">🤖</span>
+              <div className="text-left">
+                <div className="text-xs text-haven-gray font-normal">Get it on</div>
+                <div>Google Play</div>
+              </div>
+            </Link>
+          </div>
         </div>
       </section>
 
