@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       take: limit,
       orderBy: [{ createdAt: 'desc' }],
       include: {
-        owner: { select: { id: true, firstName: true, lastName: true, avatar: true, averageRating: true } },
+        owner: { select: { id: true, firstName: true, lastName: true, avatar: true, averageRating: true, totalSits: true } },
         pets:  { select: { type: true, name: true } },
         _count: { select: { applications: true } },
       },
