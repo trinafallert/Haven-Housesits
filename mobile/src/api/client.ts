@@ -418,3 +418,32 @@ export const reviews = {
     })
   },
 }
+
+// ─── Saved listings ───────────────────────────────────────────────────────────
+export const saved = {
+  async list(): Promise<{ listings: any[] }> {
+    return request('/saved')
+  },
+  async toggle(listingId: string): Promise<{ saved: boolean }> {
+    return request('/saved', {
+      method: 'POST',
+      body: JSON.stringify({ listingId }),
+    })
+  },
+  async check(listingId: string): Promise<{ saved: boolean }> {
+    return request(`/saved?listingId=${listingId}`)
+  },
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+export const notifications = {
+  async list(): Promise<{ notifications: any[] }> {
+    return request('/notifications')
+  },
+  async markRead(id: string): Promise<{ success: boolean }> {
+    return request(`/notifications/${id}/read`, { method: 'POST' })
+  },
+  async markAllRead(): Promise<{ success: boolean }> {
+    return request('/notifications/read-all', { method: 'POST' })
+  },
+}

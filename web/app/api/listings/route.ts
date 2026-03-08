@@ -12,20 +12,30 @@ export async function GET(req: NextRequest) {
   const sitType  = searchParams.get('sitType') ?? undefined
   const petType  = searchParams.get('petType') ?? undefined
   const country  = searchParams.get('country') ?? undefined
+  const city     = searchParams.get('city') ?? undefined
   const startDate= searchParams.get('startDate') ?? undefined
   const endDate  = searchParams.get('endDate') ?? undefined
+  const minDays  = searchParams.get('minDays')  ? parseInt(searchParams.get('minDays')!) : undefined
+  const search   = searchParams.get('search') ?? undefined
   const dogWalk  = searchParams.get('dogWalkReq') ?? undefined
   const autoLitter = searchParams.get('hasAutoLitterBox')
 
   const where: any = {
     status: 'ACTIVE',
     ...(sitType ? { sitType } : {}),
-    ...(country ? { country } : {}),
+    ...(country ? { country: { contains: country, mode: 'insensitive' } } : {}),
+    ...(city    ? { city: { contains: city, mode: 'insensitive' } } : {}),
     ...(dogWalk ? { dogWalkReq: dogWalk } : {}),
     ...(autoLitter === 'true' ? { hasAutoLitterBox: true } : {}),
     ...(startDate ? { startDate: { lte: new Date(startDate) } } : {}),
     ...(endDate   ? { endDate:   { gte: new Date(endDate) } }   : {}),
     ...(petType   ? { pets: { some: { type: petType } } }       : {}),
+    ...(search    ? { OR: [
+      { title:       { contains: search, mode: 'insensitive' } },
+      { city:        { contains: search, mode: 'insensitive' } },
+      { country:     { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+    ]} : {}),
   }
 
   const [listings, total] = await Promise.all([

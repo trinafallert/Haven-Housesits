@@ -4,11 +4,12 @@ import { Colors } from '@/constants/colors'
 
 function TabIcon({ name, focused, label }: { name: string; focused: boolean; label: string }) {
   const icons: Record<string, string> = {
-    search: '🔍',
-    'my-sits': '🏡',
-    post: '➕',
-    inbox: '💬',
-    profile: '👤',
+    search:   '🔍',
+    'my-sits':'🏡',
+    post:     '➕',
+    inbox:    '💬',
+    saved:    '❤️',
+    profile:  '👤',
   }
   return (
     <View style={styles.tabItem}>
@@ -55,6 +56,12 @@ export default function TabLayout() {
         name="inbox"
         options={{
           tabBarIcon: ({ focused }) => <TabIcon name="inbox" focused={focused} label="Inbox" />,
+        }}
+      />
+      <Tabs.Screen
+        name="saved"
+        options={{
+          tabBarIcon: ({ focused }) => <TabIcon name="saved" focused={focused} label="Saved" />,
         }}
       />
       <Tabs.Screen

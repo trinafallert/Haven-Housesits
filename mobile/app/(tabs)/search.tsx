@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import MapView, { Marker } from 'react-native-maps'
 import { Colors, Shadows } from '@/constants/colors'
-import { useListings } from '@/src/hooks'
+import { useListings, useNotifications } from '@/src/hooks'
 import type { Listing } from '@/src/api/client'
 
 const { width } = Dimensions.get('window')
@@ -471,11 +471,15 @@ function FilterPanel({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function SearchScreen() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterVisible, setFilterVisible] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
+
+  const { data: notifData } = useNotifications()
+  const unreadCount = (notifData?.notifications ?? []).filter((n: any) => !n.isRead).length
 
   // Only pass sitType=PAID/LONG_TERM to API; handle other tab filters client-side
   const sitTypeParam =
@@ -586,6 +590,17 @@ export default function SearchScreen() {
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.bellBtn}
+          onPress={() => router.push('/notifications')}
+        >
+          <Text style={{ fontSize: 20 }}>🔔</Text>
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -735,6 +750,9 @@ const styles = StyleSheet.create({
   filterBtnIcon:  { fontSize: 20 },
   filterBadge:    { position: 'absolute', top: -4, right: -4, backgroundColor: Colors.amber, borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
   filterBadgeText: { color: Colors.white, fontSize: 10, fontWeight: '800' },
+  bellBtn:        { backgroundColor: Colors.white, borderRadius: 12, width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.sand, position: 'relative' },
+  bellBadge:      { position: 'absolute', top: -4, right: -4, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
+  bellBadgeText:  { color: Colors.white, fontSize: 10, fontWeight: '800' },
 
   // Tabs row
   tabsMapRow:     { flexDirection: 'row', alignItems: 'center', paddingRight: 16 },

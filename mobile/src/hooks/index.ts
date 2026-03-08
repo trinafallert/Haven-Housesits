@@ -5,6 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   auth, listings, applications, messages, profile, tips, reviews,
+  saved, notifications,
   setStoredUser,
 } from '../api/client'
 import { useAuthStore } from '../store/auth'
@@ -212,5 +213,55 @@ export function useCreateReview() {
   return useMutation({
     mutationFn: reviews.create,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reviews'] }),
+  })
+}
+
+// ─── Saved hooks ──────────────────────────────────────────────────────────────
+
+export function useSavedListings() {
+  return useQuery({
+    queryKey: ['saved'],
+    queryFn: () => saved.list(),
+  })
+}
+
+export function useToggleSave() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (listingId: string) => saved.toggle(listingId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['saved'] }),
+  })
+}
+
+export function useIsSaved(listingId: string) {
+  return useQuery({
+    queryKey: ['saved', listingId],
+    queryFn: () => saved.check(listingId),
+    enabled: !!listingId,
+  })
+}
+
+// ─── Notification hooks ───────────────────────────────────────────────────────
+
+export function useNotifications() {
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notifications.list(),
+  })
+}
+
+export function useMarkNotificationRead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => notifications.markRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  })
+}
+
+export function useMarkAllNotificationsRead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => notifications.markAllRead(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
 }
