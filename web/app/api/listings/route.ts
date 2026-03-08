@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const where: any = {
     status: 'ACTIVE',
-    ...(sitType ? { sitType } : {}),
+    ...(sitType ? { type: sitType } : {}),
     ...(country ? { country: { contains: country, mode: 'insensitive' } } : {}),
     ...(city    ? { city: { contains: city, mode: 'insensitive' } } : {}),
     ...(dogWalk ? { dogWalkReq: dogWalk } : {}),
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       where,
       skip,
       take: limit,
-      orderBy: [{ isBoosted: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ createdAt: 'desc' }],
       include: {
         owner: { select: { id: true, firstName: true, lastName: true, avatar: true, averageRating: true } },
         pets:  { select: { type: true, name: true } },
