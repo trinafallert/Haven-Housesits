@@ -1,93 +1,114 @@
-'use client'
-
-import { useParams } from 'next/navigation'
-import Link from 'next/link'
+import type { Metadata } from 'next'
 import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import {
   ArrowLeft, Star, CheckCircle2, MapPin, Calendar, Users,
-  Briefcase, Heart, Globe, MessageSquare, Share2
+  Briefcase, MessageSquare, Share2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge, VerifiedChip, MatchScore } from '@/components/ui/badge'
+import { ListingCard } from '@/components/listings/listing-card'
 import { PET_ICONS, PET_LABELS, formatDateRange } from '@/lib/utils'
+import { prisma } from '@/lib/prisma'
 
-/* ─── Mock profile ─── */
-const MOCK_PROFILE = {
-  id: 'u1',
-  firstName: 'Jordan',
-  lastName: 'Rivera',
-  avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-  photos: [
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=70',
-    'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=70',
-    'https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&q=70',
-  ],
-  headline: 'Experienced pet lover & remote worker 🌿',
-  introduction:
-    "Hi! I'm Jordan — a travel-loving remote worker who adores animals. I've been house sitting for 4 years across 3 countries, caring for everything from cats and dogs to rabbits and chickens. I treat every home like my own and love sending daily photo updates.",
-  whyHouseSit:
-    "House sitting lets me explore new places while doing something I genuinely love — caring for animals. It's a win-win that lets me travel sustainably and build meaningful connections.",
-  location: 'Austin, TX',
-  occupation: 'UX Designer (Remote)',
-  memberSince: '2022-05-10',
-  idVerified: true,
-  backgroundCheck: 'VERIFIED',
-  rating: 4.97,
-  totalReviews: 34,
-  totalSits: 34,
-  responseRate: 98,
-  responseTime: '< 1 hour',
-  hasCoSitter: true,
-  coSitter: { firstName: 'Alex', lastName: 'R', avatar: null },
-  petTypes: ['DOG', 'CAT', 'RABBIT', 'BIRD'],
-  petSkills: ['Daily walks', 'Medication admin', 'Puppy care', 'Senior pets', 'Multiple pets'],
-  experienceYears: 4,
-  aboutExperience: 'Previously cared for 3 rescue dogs and 2 cats for a family in San Diego for 2 weeks. Regular dog walking for 5 neighbours.',
-  petsOwned: [
-    { type: 'DOG', name: 'Mochi (goldendoodle)', photo: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&q=70' },
-  ],
-  preferences: {
-    placeTypes: ['HOUSE', 'APARTMENT', 'COTTAGE'],
-    countries: ['US', 'UK', 'AU', 'CA'],
-    remoteWorkFriendly: true,
-    videoCallComfortable: true,
-    inPersonMeeting: false,
-  },
-  availability: [
-    { start: '2026-03-15', end: '2026-04-10' },
-    { start: '2026-06-01', end: '2026-06-28' },
-  ],
-  socialProfiles: {
-    airbnb: 'jordan_rivera',
-    linkedin: 'jordan-rivera-design',
-  },
-  references: [
-    { name: 'Sandra D.', text: 'Jordan was incredible — Cleo was so well looked after. Daily photo updates, spotless home. 10/10!', status: 'CONFIRMED' },
-    { name: 'Jake M.', text: 'Super reliable and communicative. Would absolutely have Jordan again.', status: 'CONFIRMED' },
-  ],
-  reviews: [
-    {
-      id: 'r1',
-      owner: { firstName: 'Sandra', lastName: 'D', avatar: 'https://randomuser.me/api/portraits/women/44.jpg' },
-      listing: { city: 'Redondo Beach', state: 'CA' },
-      rating: 5,
-      text: 'Jordan was a fantastic sitter. Cleo was so well cared for — daily photos and updates. The home was left spotless.',
-      createdAt: '2026-02-23T00:00:00Z',
-    },
-    {
-      id: 'r2',
-      owner: { firstName: 'Jake', lastName: 'M', avatar: 'https://randomuser.me/api/portraits/men/32.jpg' },
-      listing: { city: 'San Francisco', state: 'CA' },
-      rating: 5,
-      text: 'Incredibly reliable and communicative. Luna was in great hands. Would book again in a heartbeat.',
-      createdAt: '2026-01-05T00:00:00Z',
-    },
-  ],
+async function getProfile(id: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatar: true,
+        tagline: true,
+        bio: true,
+        role: true,
+        occupation: true,
+        city: true,
+        state: true,
+        country: true,
+        membershipPlan: true,
+        idVerified: true,
+        backgroundCheckStatus: true,
+        averageRating: true,
+        totalSits: true,
+        totalReviews: true,
+        yearsExperience: true,
+        whyHouseSit: true,
+        petTypes: true,
+        hasCoSitter: true,
+        createdAt: true,
+        listings: {
+          where: { status: 'ACTIVE' },
+          select: {
+            id: true,
+            title: true,
+            city: true,
+            state: true,
+            country: true,
+            startDate: true,
+            endDate: true,
+            photos: true,
+            type: true,
+            isPaid: true,
+            price: true,
+            currency: true,
+            currentApplicants: true,
+            maxApplications: true,
+            pets: {
+              select: { type: true, name: true },
+            },
+          },
+          orderBy: { startDate: 'asc' },
+          take: 6,
+        },
+        reviewsReceived: {
+          where: { isPublished: true },
+          include: {
+            reviewer: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+              },
+            },
+            listing: {
+              select: {
+                city: true,
+                state: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+      },
+    })
+    return user
+  } catch (error) {
+    console.error('Error fetching profile:', error)
+    return null
+  }
 }
 
-export default function ProfilePage() {
-  const profile = MOCK_PROFILE
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const profile = await getProfile(params.id)
+  if (!profile) return {}
+  return {
+    title: `${profile.firstName} ${profile.lastName} — Haven Housesits`,
+    description: profile.tagline || profile.bio || `View ${profile.firstName}'s sitter profile on Haven Housesits.`,
+  }
+}
+
+export default async function ProfilePage({ params }: { params: { id: string } }) {
+  const profile = await getProfile(params.id)
+  if (!profile) notFound()
+
+  const location = [profile.city, profile.state, profile.country].filter(Boolean).join(', ')
+  const memberSince = new Date(profile.createdAt).getFullYear()
 
   return (
     <div className="bg-haven-cream min-h-screen pb-16">
@@ -103,7 +124,12 @@ export default function ProfilePage() {
         <div className="card p-6 mb-5">
           <div className="flex items-start gap-4 mb-4">
             <div className="relative">
-              <Avatar src={profile.avatar} fallback={`${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`} size="xl" />
+              <Avatar
+                src={profile.avatar ?? undefined}
+                firstName={profile.firstName}
+                lastName={profile.lastName}
+                size="xl"
+              />
               {profile.idVerified && (
                 <span className="absolute -bottom-1 -right-1 h-6 w-6 bg-haven-teal rounded-full flex items-center justify-center border-2 border-white">
                   <CheckCircle2 className="h-3.5 w-3.5 text-white" />
@@ -116,16 +142,26 @@ export default function ProfilePage() {
                 <h1 className="font-display text-2xl font-bold text-haven-navy">
                   {profile.firstName} {profile.lastName}
                 </h1>
-                <MatchScore score={97} />
               </div>
-              <p className="text-haven-gray text-sm mt-0.5">{profile.headline}</p>
-              <div className="flex items-center gap-1 mt-1.5">
-                <MapPin className="h-3.5 w-3.5 text-haven-gray-light" />
-                <span className="text-xs text-haven-gray">{profile.location}</span>
-                <span className="text-haven-sand mx-1">·</span>
-                <Briefcase className="h-3.5 w-3.5 text-haven-gray-light" />
-                <span className="text-xs text-haven-gray">{profile.occupation}</span>
+              {profile.tagline && (
+                <p className="text-haven-gray text-sm mt-0.5">{profile.tagline}</p>
+              )}
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5">
+                {location && (
+                  <>
+                    <MapPin className="h-3.5 w-3.5 text-haven-gray-light" />
+                    <span className="text-xs text-haven-gray">{location}</span>
+                  </>
+                )}
+                {profile.occupation && (
+                  <>
+                    <span className="text-haven-sand">·</span>
+                    <Briefcase className="h-3.5 w-3.5 text-haven-gray-light" />
+                    <span className="text-xs text-haven-gray">{profile.occupation}</span>
+                  </>
+                )}
               </div>
+              <p className="text-xs text-haven-gray-light mt-1">Member since {memberSince}</p>
             </div>
 
             <div className="flex gap-2 flex-shrink-0">
@@ -136,35 +172,41 @@ export default function ProfilePage() {
           </div>
 
           {/* Rating row */}
-          <div className="flex items-center gap-4 py-3 border-y border-haven-sand/30 mb-4">
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-              <span className="font-bold text-haven-navy">{profile.rating}</span>
-              <span className="text-xs text-haven-gray">({profile.totalReviews} reviews)</span>
+          {(profile.averageRating || profile.totalSits > 0) && (
+            <div className="flex flex-wrap items-center gap-4 py-3 border-y border-haven-sand/30 mb-4">
+              {profile.averageRating && (
+                <>
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    <span className="font-bold text-haven-navy">{profile.averageRating.toFixed(2)}</span>
+                    <span className="text-xs text-haven-gray">({profile.totalReviews} reviews)</span>
+                  </div>
+                  <div className="w-px h-4 bg-haven-sand" />
+                </>
+              )}
+              {profile.totalSits > 0 && (
+                <div className="text-sm">
+                  <span className="font-bold text-haven-navy">{profile.totalSits}</span>
+                  <span className="text-haven-gray text-xs"> sits completed</span>
+                </div>
+              )}
             </div>
-            <div className="w-px h-4 bg-haven-sand" />
-            <div className="text-sm">
-              <span className="font-bold text-haven-navy">{profile.totalSits}</span>
-              <span className="text-haven-gray text-xs"> sits completed</span>
-            </div>
-            <div className="w-px h-4 bg-haven-sand" />
-            <div className="text-sm">
-              <span className="font-bold text-haven-navy">{profile.responseRate}%</span>
-              <span className="text-haven-gray text-xs"> response</span>
-            </div>
-          </div>
+          )}
 
           {/* Verified chips */}
           <div className="flex flex-wrap gap-2 mb-4">
             {profile.idVerified && <VerifiedChip>ID Verified</VerifiedChip>}
-            {profile.backgroundCheck === 'VERIFIED' && <VerifiedChip>Background Check</VerifiedChip>}
+            {profile.backgroundCheckStatus === 'VERIFIED' && <VerifiedChip>Background Check</VerifiedChip>}
             {profile.hasCoSitter && (
               <VerifiedChip>
                 <Users className="h-3 w-3" /> Duo sitter
               </VerifiedChip>
             )}
-            {profile.socialProfiles.airbnb && <VerifiedChip>Airbnb ✓</VerifiedChip>}
-            {profile.socialProfiles.linkedin && <VerifiedChip>LinkedIn ✓</VerifiedChip>}
+            {profile.membershipPlan === 'PREMIUM' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                ⭐ Premium member
+              </span>
+            )}
           </div>
 
           {/* CTA */}
@@ -173,161 +215,123 @@ export default function ProfilePage() {
           </Button>
         </div>
 
-        {/* Photos */}
-        {profile.photos.length > 0 && (
+        {/* About */}
+        {(profile.bio || profile.whyHouseSit) && (
           <div className="card p-5 mb-5">
-            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">Photos</h2>
-            <div className="grid grid-cols-3 gap-2">
-              {profile.photos.map((photo, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-haven-sand/20">
-                  <Image src={photo} alt="" fill className="object-cover" />
-                </div>
-              ))}
-            </div>
+            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">About {profile.firstName}</h2>
+            {profile.bio && (
+              <p className="text-haven-gray text-sm leading-relaxed mb-4">{profile.bio}</p>
+            )}
+            {profile.whyHouseSit && (
+              <>
+                <h3 className="font-semibold text-haven-navy text-sm mb-1.5">Why I love house sitting</h3>
+                <p className="text-haven-gray text-sm leading-relaxed">{profile.whyHouseSit}</p>
+              </>
+            )}
           </div>
         )}
-
-        {/* About */}
-        <div className="card p-5 mb-5">
-          <h2 className="font-display text-lg font-bold text-haven-navy mb-3">About {profile.firstName}</h2>
-          <p className="text-haven-gray text-sm leading-relaxed mb-4">{profile.introduction}</p>
-          <h3 className="font-semibold text-haven-navy text-sm mb-1.5">Why I love house sitting</h3>
-          <p className="text-haven-gray text-sm leading-relaxed">{profile.whyHouseSit}</p>
-        </div>
 
         {/* Experience */}
-        <div className="card p-5 mb-5">
-          <h2 className="font-display text-lg font-bold text-haven-navy mb-3">Experience</h2>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-2xl font-bold text-haven-teal">{profile.experienceYears}</span>
-            <span className="text-haven-gray text-sm">years of pet care experience</span>
-          </div>
-          <p className="text-haven-gray text-sm leading-relaxed mb-4">{profile.aboutExperience}</p>
-
-          <h3 className="font-semibold text-haven-navy text-sm mb-2">Pets I'm comfortable with</h3>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {profile.petTypes.map((type) => (
-              <span key={type} className="badge-teal">
-                {PET_ICONS[type]} {PET_LABELS[type]}
-              </span>
-            ))}
-          </div>
-
-          <h3 className="font-semibold text-haven-navy text-sm mb-2">Pet care skills</h3>
-          <div className="flex flex-wrap gap-2">
-            {profile.petSkills.map((skill) => (
-              <span key={skill} className="px-3 py-1 rounded-full border border-haven-sand text-xs text-haven-gray font-medium">
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* My pets */}
-        {profile.petsOwned.length > 0 && (
+        {(profile.yearsExperience || (profile.petTypes && profile.petTypes.length > 0)) && (
           <div className="card p-5 mb-5">
-            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">My own pets</h2>
-            {profile.petsOwned.map((pet, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="relative h-12 w-12 rounded-xl overflow-hidden bg-haven-sand/20 flex-shrink-0">
-                  {pet.photo ? (
-                    <Image src={pet.photo} alt={pet.name} fill className="object-cover" />
-                  ) : (
-                    <span className="text-2xl flex items-center justify-center h-full">{PET_ICONS[pet.type]}</span>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-haven-navy text-sm">{pet.name}</p>
-                  <p className="text-xs text-haven-gray">{PET_LABELS[pet.type]}</p>
-                </div>
+            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">Experience</h2>
+            {profile.yearsExperience && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl font-bold text-haven-teal">{profile.yearsExperience}</span>
+                <span className="text-haven-gray text-sm">years of pet care experience</span>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Co-sitter */}
-        {profile.hasCoSitter && profile.coSitter && (
-          <div className="card p-5 mb-5">
-            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">
-              <span className="flex items-center gap-2"><Users className="h-5 w-5 text-haven-teal" /> Duo sitting team</span>
-            </h2>
-            <div className="flex items-center gap-3">
-              <Avatar
-                src={profile.coSitter.avatar}
-                fallback={`${profile.coSitter.firstName.charAt(0)}${profile.coSitter.lastName.charAt(0)}`}
-                size="md"
-              />
-              <div>
-                <p className="font-semibold text-haven-navy">
-                  {profile.coSitter.firstName} {profile.coSitter.lastName}
-                </p>
-                <VerifiedChip className="mt-1">Background Check ✓</VerifiedChip>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Availability */}
-        {profile.availability.length > 0 && (
-          <div className="card p-5 mb-5">
-            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">
-              <span className="flex items-center gap-2"><Calendar className="h-5 w-5 text-haven-teal" /> Availability</span>
-            </h2>
-            <div className="space-y-2">
-              {profile.availability.map((range, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  <span className="h-2 w-2 rounded-full bg-haven-teal flex-shrink-0" />
-                  <span className="text-haven-navy font-medium">{formatDateRange(range.start, range.end)}</span>
+            )}
+            {profile.petTypes && profile.petTypes.length > 0 && (
+              <>
+                <h3 className="font-semibold text-haven-navy text-sm mb-2">Pets I'm comfortable with</h3>
+                <div className="flex flex-wrap gap-2">
+                  {profile.petTypes.map((type) => (
+                    <span key={type} className="badge-teal">
+                      {PET_ICONS[type]} {PET_LABELS[type]}
+                    </span>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         )}
 
-        {/* References */}
-        {profile.references.length > 0 && (
-          <div className="card p-5 mb-5">
-            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">References</h2>
+        {/* Active listings */}
+        {profile.listings && profile.listings.length > 0 && (
+          <div className="mb-5">
+            <h2 className="font-display text-lg font-bold text-haven-navy mb-3">
+              Active listings from {profile.firstName}
+            </h2>
             <div className="space-y-4">
-              {profile.references.map((ref, i) => (
-                <div key={i} className="bg-haven-cream-dark rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    <span className="text-sm font-semibold text-haven-navy">{ref.name}</span>
-                    <span className="text-xs text-emerald-600 font-medium">{ref.status}</span>
-                  </div>
-                  <p className="text-sm text-haven-gray italic">"{ref.text}"</p>
-                </div>
-              ))}
+              {profile.listings.map((listing) => {
+                const startDate = listing.startDate.toISOString().split('T')[0]
+                const endDate = listing.endDate.toISOString().split('T')[0]
+                return (
+                  <ListingCard
+                    key={listing.id}
+                    listing={{
+                      id: listing.id,
+                      title: listing.title,
+                      city: listing.city,
+                      state: listing.state ?? undefined,
+                      country: listing.country,
+                      startDate,
+                      endDate,
+                      photos: listing.photos,
+                      type: listing.type,
+                      isPaid: listing.isPaid,
+                      price: listing.price ?? undefined,
+                      currency: listing.currency,
+                      pets: listing.pets.map((p) => ({ type: p.type, name: p.name })),
+                      owner: {
+                        firstName: profile.firstName,
+                        lastName: profile.lastName,
+                        avatar: profile.avatar ?? undefined,
+                        averageRating: profile.averageRating ?? undefined,
+                        totalSits: profile.totalSits,
+                      },
+                      currentApplicants: listing.currentApplicants,
+                      maxApplications: listing.maxApplications,
+                    }}
+                  />
+                )
+              })}
             </div>
           </div>
         )}
 
         {/* Reviews */}
-        {profile.reviews.length > 0 && (
+        {profile.reviewsReceived && profile.reviewsReceived.length > 0 && (
           <div className="card p-5 mb-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-display text-lg font-bold text-haven-navy">Reviews</h2>
-              <div className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span className="font-bold text-haven-navy">{profile.rating}</span>
-                <span className="text-xs text-haven-gray">({profile.totalReviews})</span>
-              </div>
+              {profile.averageRating && (
+                <div className="flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  <span className="font-bold text-haven-navy">{profile.averageRating.toFixed(2)}</span>
+                  <span className="text-xs text-haven-gray">({profile.totalReviews})</span>
+                </div>
+              )}
             </div>
             <div className="space-y-4">
-              {profile.reviews.map((review) => (
+              {profile.reviewsReceived.map((review) => (
                 <div key={review.id} className="border-b border-haven-sand/30 last:border-0 pb-4 last:pb-0">
                   <div className="flex items-center gap-3 mb-2">
                     <Avatar
-                      src={review.owner.avatar}
-                      fallback={`${review.owner.firstName.charAt(0)}${review.owner.lastName.charAt(0)}`}
+                      src={review.reviewer.avatar ?? undefined}
+                      firstName={review.reviewer.firstName}
+                      lastName={review.reviewer.lastName}
                       size="sm"
                     />
                     <div>
                       <p className="text-sm font-semibold text-haven-navy">
-                        {review.owner.firstName} {review.owner.lastName}
+                        {review.reviewer.firstName} {review.reviewer.lastName}
                       </p>
-                      <p className="text-xs text-haven-gray">{review.listing.city}, {review.listing.state}</p>
+                      {review.listing && (
+                        <p className="text-xs text-haven-gray">
+                          {review.listing.city}{review.listing.state ? `, ${review.listing.state}` : ''}
+                        </p>
+                      )}
                     </div>
                     <div className="ml-auto flex items-center gap-0.5">
                       {[1,2,3,4,5].map((i) => (
@@ -335,7 +339,12 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   </div>
-                  <p className="text-sm text-haven-gray leading-relaxed">{review.text}</p>
+                  {review.comment && (
+                    <p className="text-sm text-haven-gray leading-relaxed">{review.comment}</p>
+                  )}
+                  <p className="text-xs text-haven-gray-light mt-2">
+                    {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </p>
                 </div>
               ))}
             </div>
