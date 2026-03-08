@@ -71,6 +71,9 @@ export interface Listing {
   hasPool?: boolean
   hasParking?: boolean
   isBoosted?: boolean
+  isFamilyFriendly?: boolean
+  latitude?: number
+  longitude?: number
   photos?: string[]
   owner: {
     id: string
@@ -254,6 +257,7 @@ export const listings = {
     startDate?: string
     endDate?: string
     search?: string
+    minDays?: number
   }): Promise<{ listings: Listing[]; pagination: any }> {
     const qs = new URLSearchParams()
     if (params?.page)      qs.set('page', String(params.page))
@@ -263,6 +267,8 @@ export const listings = {
     if (params?.country)   qs.set('country', params.country)
     if (params?.startDate) qs.set('startDate', params.startDate)
     if (params?.endDate)   qs.set('endDate', params.endDate)
+    if (params?.search)    qs.set('search', params.search)
+    if (params?.minDays)   qs.set('minDays', String(params.minDays))
     const query = qs.toString() ? `?${qs.toString()}` : ''
     return request(`/listings${query}`)
   },
