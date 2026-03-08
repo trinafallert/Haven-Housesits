@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Dimensions, Modal, TextInput, Platform,
+  Dimensions, Modal, TextInput, Platform, ActivityIndicator,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
 import { Colors, Shadows } from '@/constants/colors'
-import { MOCK_LISTINGS } from '@/constants/mock-data'
+import { useListing, useApply } from '../../src/hooks'
+import { useAuthStore } from '../../src/store/auth'
 
 const { width } = Dimensions.get('window')
 
@@ -21,18 +22,49 @@ const ADD_ONS = [
 export default function ListingDetailScreen() {
   const { id }  = useLocalSearchParams<{ id: string }>()
   const router  = useRouter()
-  const listing = MOCK_LISTINGS.find((l) => l.id === id) ?? MOCK_LISTINGS[0]
+  const user    = useAuthStore((s) => s.user)
+
+  const { data, isLoading, isError } = useListing(id ?? '')
+  const applyMutation = useApply()
 
   const [saved,        setSaved]        = useState(false)
   const [showApply,    setShowApply]    = useState(false)
   const [message,      setMessage]      = useState('')
   const [applied,      setApplied]      = useState(false)
   const [addOns,       setAddOns]       = useState<string[]>([])
-  const [photoIdx,     setPhotoIdx]     = useState(0)
+  const [applyError,   setApplyError]   = useState('')
 
-  const isPaid = (listing as any).sitType === 'PAID'
-  const days   = Math.ceil((new Date((listing as any).endDate).getTime() - new Date((listing as any).startDate).getTime()) / 86400000)
-  const total  = isPaid && (listing as any).dailyRate ? (listing as any).dailyRate * days : 0
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={Colors.teal} />
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  if (isError || !data?.listing) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.topBar}>
+          <TouchableOpacity style={styles.topBtn} onPress={() => router.back()}>
+            <Text style={styles.topBtnText}>←</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>😕</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.navy }}>Listing not found</Text>
+          <Text style={{ fontSize: 14, color: Colors.gray, marginTop: 8 }}>This sit may have been filled or removed.</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  const listing = data.listing
+  const isPaid  = listing.sitType === 'PAID'
+  const days    = Math.ceil((new Date(listing.endDate).getTime() - new Date(listing.startDate).getTime()) / 86400000)
+  const total   = isPaid && listing.dailyRate ? listing.dailyRate * days : 0
   const addOnTotal = addOns.reduce((sum, id) => sum + (ADD_ONS.find(a => a.id === id)?.price ?? 0), 0)
 
   const petIcons: Record<string, string> = { DOG:'🐕', CAT:'🐈', BIRD:'🦜', FISH:'🐠', REPTILE:'🦎', HORSE:'🐴', SMALL_PET:'🐹' }
@@ -40,7 +72,17 @@ export default function ListingDetailScreen() {
   const toggleAddOn = (id: string) =>
     setAddOns(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
-  const fmt = (s: string) => new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  async function handleApply() {
+    if (message.length < 20) return
+    setApplyError('')
+    try {
+      await applyMutation.mutateAsync({ listingId: listing.id, message })
+      setApplied(true)
+      setShowApply(false)
+    } catch (e: any) {
+      setApplyError(e?.message ?? 'Failed to apply. Please try again.')
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -58,7 +100,7 @@ export default function ListingDetailScreen() {
         {/* Hero photo */}
         <View style={styles.heroWrap}>
           <Image
-            source={{ uri: (listing as any).photos?.[0] ?? 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }}
+            source={{ uri: listing.photos?.[0] ?? 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800' }}
             style={styles.hero}
             contentFit="cover"
             transition={300}
@@ -70,41 +112,41 @@ export default function ListingDetailScreen() {
 
         <View style={styles.body}>
           {/* Title + location */}
-          <Text style={styles.title}>{(listing as any).title}</Text>
-          <Text style={styles.location}>📍 {(listing as any).city}, {(listing as any).country ?? (listing as any).state}</Text>
+          <Text style={styles.title}>{listing.title}</Text>
+          <Text style={styles.location}>📍 {listing.city}, {listing.country ?? listing.state}</Text>
 
           {/* Dates card */}
           <View style={styles.datesCard}>
             <View style={styles.dateBlock}>
               <Text style={styles.dateLabel}>FROM</Text>
-              <Text style={styles.dateDay}>{new Date((listing as any).startDate).getDate()}</Text>
-              <Text style={styles.dateMonth}>{new Date((listing as any).startDate).toLocaleDateString('en-US',{month:'short'})}</Text>
-              <Text style={styles.dateYear}>{new Date((listing as any).startDate).getFullYear()}</Text>
+              <Text style={styles.dateDay}>{new Date(listing.startDate).getDate()}</Text>
+              <Text style={styles.dateMonth}>{new Date(listing.startDate).toLocaleDateString('en-US',{month:'short'})}</Text>
+              <Text style={styles.dateYear}>{new Date(listing.startDate).getFullYear()}</Text>
             </View>
             <View style={styles.dateDivider}>
               <Text style={styles.dateDividerText}>{days}d</Text>
             </View>
             <View style={styles.dateBlock}>
               <Text style={styles.dateLabel}>TO</Text>
-              <Text style={styles.dateDay}>{new Date((listing as any).endDate).getDate()}</Text>
-              <Text style={styles.dateMonth}>{new Date((listing as any).endDate).toLocaleDateString('en-US',{month:'short'})}</Text>
-              <Text style={styles.dateYear}>{new Date((listing as any).endDate).getFullYear()}</Text>
+              <Text style={styles.dateDay}>{new Date(listing.endDate).getDate()}</Text>
+              <Text style={styles.dateMonth}>{new Date(listing.endDate).toLocaleDateString('en-US',{month:'short'})}</Text>
+              <Text style={styles.dateYear}>{new Date(listing.endDate).getFullYear()}</Text>
             </View>
-            {isPaid && (
+            {isPaid && listing.dailyRate && (
               <View style={styles.rateBlock}>
                 <Text style={styles.rateLabel}>TOTAL PAY</Text>
                 <Text style={styles.rateAmount}>${total}</Text>
-                <Text style={styles.rateBreak}>${(listing as any).dailyRate}/day</Text>
+                <Text style={styles.rateBreak}>${listing.dailyRate}/day</Text>
               </View>
             )}
           </View>
 
           {/* Pets */}
-          {((listing as any).pets ?? []).length > 0 && (
+          {(listing.pets ?? []).length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>🐾 Pets</Text>
               <View style={styles.petsRow}>
-                {((listing as any).pets ?? []).map((p: any, i: number) => (
+                {(listing.pets ?? []).map((p, i) => (
                   <View key={i} style={styles.petChip}>
                     <Text style={styles.petEmoji}>{petIcons[p.type] ?? '🐾'}</Text>
                     <Text style={styles.petName}>{p.name}</Text>
@@ -117,42 +159,45 @@ export default function ListingDetailScreen() {
           {/* Owner */}
           <View style={styles.ownerCard}>
             <Image
-              source={{ uri: (listing as any).owner?.avatar ?? 'https://randomuser.me/api/portraits/women/44.jpg' }}
+              source={{ uri: listing.owner?.avatar ?? 'https://randomuser.me/api/portraits/women/44.jpg' }}
               style={styles.ownerAvatar}
               contentFit="cover"
             />
             <View style={{ flex: 1 }}>
-              <Text style={styles.ownerName}>{(listing as any).owner?.firstName} {(listing as any).owner?.lastName}</Text>
+              <Text style={styles.ownerName}>{listing.owner?.firstName} {listing.owner?.lastName}</Text>
               <View style={styles.ownerRating}>
                 <Text style={{ color: '#F59E0B' }}>★</Text>
-                <Text style={styles.ownerRatingText}>{(listing as any).owner?.averageRating?.toFixed(1) ?? '5.0'} · {(listing as any).owner?.totalReviews ?? 0} reviews</Text>
+                <Text style={styles.ownerRatingText}>{listing.owner?.averageRating?.toFixed(1) ?? '5.0'} · {listing.owner?.totalReviews ?? 0} reviews</Text>
               </View>
+              {listing.owner?.idVerified && (
+                <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                  <View style={styles.badge}><Text style={styles.badgeText}>✓ ID</Text></View>
+                  {listing.owner?.backgroundCheck && <View style={styles.badge}><Text style={styles.badgeText}>✓ BG Check</Text></View>}
+                </View>
+              )}
             </View>
-            <TouchableOpacity style={styles.msgBtn}>
-              <Text style={styles.msgBtnText}>Message</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Amenities */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🏠 Home details</Text>
             <View style={styles.amenitiesRow}>
-              {(listing as any).hasWifi    && <View style={styles.amenity}><Text>📶</Text><Text style={styles.amenityText}>Wifi</Text></View>}
-              {(listing as any).hasPool    && <View style={styles.amenity}><Text>🏊</Text><Text style={styles.amenityText}>Pool</Text></View>}
-              {(listing as any).hasParking && <View style={styles.amenity}><Text>🚗</Text><Text style={styles.amenityText}>Parking</Text></View>}
-              <View style={styles.amenity}><Text>{(listing as any).homeType === 'APARTMENT' ? '🏢' : '🏠'}</Text><Text style={styles.amenityText}>{(listing as any).homeType ?? 'House'}</Text></View>
+              {listing.hasWifi    && <View style={styles.amenity}><Text>📶</Text><Text style={styles.amenityText}>Wifi</Text></View>}
+              {listing.hasPool    && <View style={styles.amenity}><Text>🏊</Text><Text style={styles.amenityText}>Pool</Text></View>}
+              {listing.hasParking && <View style={styles.amenity}><Text>🚗</Text><Text style={styles.amenityText}>Parking</Text></View>}
+              {listing.bedrooms   && <View style={styles.amenity}><Text>🛏️</Text><Text style={styles.amenityText}>{listing.bedrooms} bed</Text></View>}
+              {listing.bathrooms  && <View style={styles.amenity}><Text>🛁</Text><Text style={styles.amenityText}>{listing.bathrooms} bath</Text></View>}
+              <View style={styles.amenity}><Text>{listing.homeType === 'APARTMENT' ? '🏢' : '🏠'}</Text><Text style={styles.amenityText}>{listing.homeType ?? 'House'}</Text></View>
             </View>
           </View>
 
           {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📋 About this sit</Text>
-            <Text style={styles.descText}>
-              Welcome to our home! We're looking for a caring, responsible sitter who will treat our home and pets like their own.
-              Our home is clean, comfortable, and fully stocked. Free wifi, Netflix, and a beautiful outdoor space.
-              {isPaid ? ` This is a paid sit — you'll earn $${(listing as any).dailyRate}/day.` : ' This is a free exchange sit — enjoy the home in exchange for pet care.'}
-            </Text>
-          </View>
+          {listing.description && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📋 About this sit</Text>
+              <Text style={styles.descText}>{listing.description}</Text>
+            </View>
+          )}
 
           {/* Add-ons */}
           <View style={styles.section}>
@@ -183,10 +228,10 @@ export default function ListingDetailScreen() {
           {/* Applications */}
           <View style={styles.appBar}>
             <View style={styles.appCount}>
-              <Text style={styles.appCountNum}>{(listing as any).applicationCount ?? 0}</Text>
+              <Text style={styles.appCountNum}>{listing._count?.applications ?? 0}</Text>
               <Text style={styles.appCountLabel}>applications</Text>
             </View>
-            <Text style={styles.appNote}>of {(listing as any).maxApplications ?? 10} max spots</Text>
+            <Text style={styles.appNote}>of {listing.maxApplications ?? 10} max spots</Text>
           </View>
         </View>
       </ScrollView>
@@ -221,15 +266,16 @@ export default function ListingDetailScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.modalBody}>
-            <Text style={styles.modalSubtitle}>Introduce yourself to {(listing as any).owner?.firstName}</Text>
+            <Text style={styles.modalSubtitle}>Introduce yourself to {listing.owner?.firstName}</Text>
             <TextInput
               style={styles.messageInput}
               value={message}
               onChangeText={setMessage}
               multiline
               numberOfLines={6}
-              placeholder={`Hi ${(listing as any).owner?.firstName}! I'd love to sit for you. A little about me...`}
+              placeholder={`Hi ${listing.owner?.firstName}! I'd love to sit for you. A little about me...`}
               placeholderTextColor={Colors.grayLight}
+              editable={!applyMutation.isPending}
             />
             {addOns.length > 0 && (
               <View style={styles.addOnSummaryCard}>
@@ -241,14 +287,18 @@ export default function ListingDetailScreen() {
                 <Text style={styles.addOnSummaryTotal}>Total add-ons: +${addOnTotal}</Text>
               </View>
             )}
+            {applyError ? <Text style={styles.errorText}>{applyError}</Text> : null}
           </ScrollView>
           <View style={styles.modalFooter}>
             <TouchableOpacity
-              style={[styles.sendBtn, message.length < 20 && styles.sendBtnDisabled]}
-              disabled={message.length < 20}
-              onPress={() => { setApplied(true); setShowApply(false) }}
+              style={[styles.sendBtn, (message.length < 20 || applyMutation.isPending) && styles.sendBtnDisabled]}
+              disabled={message.length < 20 || applyMutation.isPending}
+              onPress={handleApply}
             >
-              <Text style={styles.sendBtnText}>Send application</Text>
+              {applyMutation.isPending
+                ? <ActivityIndicator color={Colors.white} />
+                : <Text style={styles.sendBtnText}>Send application</Text>
+              }
             </TouchableOpacity>
             {message.length < 20 && <Text style={styles.sendHint}>Write at least 20 characters</Text>}
           </View>
@@ -291,13 +341,13 @@ const styles = StyleSheet.create({
   petChip:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.tealPale, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 },
   petEmoji:         { fontSize: 18 },
   petName:          { fontSize: 14, fontWeight: '600', color: C.tealDark },
+  badge:            { backgroundColor: C.tealPale, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  badgeText:        { fontSize: 11, fontWeight: '600', color: C.tealDark },
   ownerCard:        { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.white, borderRadius: 16, padding: 14, ...S.card },
   ownerAvatar:      { width: 52, height: 52, borderRadius: 26 },
   ownerName:        { fontSize: 15, fontWeight: '700', color: C.navy },
   ownerRating:      { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   ownerRatingText:  { fontSize: 13, color: C.gray },
-  msgBtn:           { backgroundColor: C.tealPale, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
-  msgBtnText:       { fontSize: 13, fontWeight: '700', color: C.teal },
   amenitiesRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   amenity:          { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.white, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, ...S.card },
   amenityText:      { fontSize: 13, color: C.navy, fontWeight: '500' },
@@ -323,6 +373,7 @@ const styles = StyleSheet.create({
   applyBtnText:     { color: C.white, fontSize: 16, fontWeight: '700' },
   appliedBanner:    { backgroundColor: '#D1FAE5', borderRadius: 14, padding: 14, alignItems: 'center' },
   appliedText:      { fontSize: 14, color: '#065F46', fontWeight: '600', textAlign: 'center' },
+  errorText:        { color: Colors.red, fontSize: 13, textAlign: 'center' },
   modalSafe:        { flex: 1, backgroundColor: C.white },
   modalHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: C.sand },
   modalTitle:       { fontSize: 18, fontWeight: '700', color: C.navy },

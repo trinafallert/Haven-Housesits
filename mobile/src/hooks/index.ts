@@ -157,6 +157,14 @@ export function useProfile() {
   })
 }
 
+export function usePublicProfile(userId: string) {
+  return useQuery({
+    queryKey: ['profile', userId],
+    queryFn: () => profile.getPublic(userId),
+    enabled: !!userId,
+  })
+}
+
 export function useUpdateProfile() {
   const qc = useQueryClient()
   const setUser = useAuthStore((s) => s.setUser)

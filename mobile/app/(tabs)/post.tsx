@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Switch, KeyboardAvoidingView, Platform,
+  TextInput, Switch, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Colors, Shadows } from '@/constants/colors'
+import { useCreateListing } from '../../src/hooks'
 
 const PET_OPTIONS = [
   { key: 'DOG',    label: 'Dog',     icon: '🐕' },
@@ -31,6 +32,7 @@ const STEPS = ['Sit type', 'Details', 'Pets & Home', 'Add-ons', 'Review']
 export default function PostListingScreen() {
   const router = useRouter()
   const [step, setStep] = useState(0)
+  const createListing = useCreateListing()
 
   // Step 0 — Sit type
   const [sitType,    setSitType]    = useState<'FREE' | 'PAID' | 'VACANT'>('FREE')
@@ -236,6 +238,40 @@ export default function PostListingScreen() {
     }
   }
 
+  async function handlePublish() {
+    try {
+      // Parse location: "City, ST" or just "City"
+      const parts = location.split(',').map(s => s.trim())
+      const city  = parts[0] ?? location
+      const state = parts[1] ?? 'US'
+
+      const homeTypeMap: Record<string, string> = {
+        House: 'HOUSE', Apartment: 'APARTMENT', Farm: 'RURAL', 'Unique stay': 'OTHER',
+      }
+
+      await createListing.mutateAsync({
+        title,
+        description: description || `${sitType === 'PAID' ? 'Paid sit' : 'Free house sit'} in ${city}. Looking for a caring, responsible sitter.`,
+        sitType,
+        homeType: homeTypeMap[homeType] ?? 'HOUSE',
+        city,
+        state,
+        country: 'US',
+        startDate,
+        endDate,
+        dailyRate: isPaid && dailyRate ? parseFloat(dailyRate) : undefined,
+        bedrooms: 2,
+        bathrooms: 1,
+        hasWifi,
+        hasParking: hasCar,
+        pets: pets.map(p => ({ type: p, name: PET_OPTIONS.find(x => x.key === p)?.label ?? p })),
+      })
+      Alert.alert('🎉 Listed!', 'Your sit is now live.', [{ text: 'OK', onPress: () => router.replace('/(tabs)/search') }])
+    } catch (e: any) {
+      Alert.alert('Error', e?.message ?? 'Failed to post listing. Please try again.')
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header */}
@@ -271,8 +307,15 @@ export default function PostListingScreen() {
               <Text style={styles.nextBtnText}>Continue →</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.publishBtn} onPress={() => router.back()}>
-              <Text style={styles.publishBtnText}>🚀 Publish listing</Text>
+            <TouchableOpacity
+              style={[styles.publishBtn, createListing.isPending && { opacity: 0.6 }]}
+              disabled={createListing.isPending}
+              onPress={handlePublish}
+            >
+              {createListing.isPending
+                ? <ActivityIndicator color={Colors.white} />
+                : <Text style={styles.publishBtnText}>🚀 Publish listing</Text>
+              }
             </TouchableOpacity>
           )}
         </View>

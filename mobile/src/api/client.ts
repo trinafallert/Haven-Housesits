@@ -359,6 +359,10 @@ export const profile = {
     return request('/profile')
   },
 
+  async getPublic(userId: string): Promise<{ profile: Profile }> {
+    return request(`/profile?userId=${userId}`)
+  },
+
   async update(data: {
     firstName?: string
     lastName?: string

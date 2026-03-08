@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform,
+  TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Image } from 'expo-image'
 import { Colors, Shadows } from '@/constants/colors'
+import { useUpdateProfile, useProfile } from '../../src/hooks'
 
 const GENDERS = ['Prefer not to say', 'Male', 'Female', 'Non-binary', 'Other']
 const OCCUPATIONS = ['Employed full-time', 'Employed part-time', 'Self-employed', 'Student', 'Retired', 'Other']
@@ -23,18 +24,36 @@ const SECTIONS = [
 
 export default function EditProfileScreen() {
   const router = useRouter()
+  const { data: profileData } = useProfile()
+  const updateProfile = useUpdateProfile()
   const [activeSection, setActiveSection] = useState<string | null>(null)
 
-  // Profile details state
-  const [firstName, setFirstName]   = useState('Trina')
-  const [lastName,  setLastName]    = useState('Fallert')
-  const [headline,  setHeadline]    = useState('Experienced pet lover & remote worker 🌿')
-  const [intro,     setIntro]       = useState('')
+  const p = profileData?.profile
+  // Pre-populate from real profile data
+  const [firstName, setFirstName]   = useState(p?.firstName ?? '')
+  const [lastName,  setLastName]    = useState(p?.lastName ?? '')
+  const [headline,  setHeadline]    = useState(p?.tagline ?? '')
+  const [intro,     setIntro]       = useState(p?.bio ?? '')
   const [whySit,    setWhySit]      = useState('')
-  const [location,  setLocation]    = useState('Austin, TX')
+  const [location,  setLocation]    = useState([p?.city, p?.state].filter(Boolean).join(', '))
   const [gender,    setGender]      = useState('Prefer not to say')
   const [occupation, setOccupation] = useState('Employed full-time')
   const [jobTitle,  setJobTitle]    = useState('')
+
+  async function handleSave() {
+    const parts = location.split(',').map(s => s.trim())
+    try {
+      await updateProfile.mutateAsync({
+        firstName: firstName || undefined,
+        lastName:  lastName  || undefined,
+        tagline:   headline  || undefined,
+        bio:       intro     || undefined,
+        city:      parts[0]  || undefined,
+        state:     parts[1]  || undefined,
+      })
+      router.back()
+    } catch {}
+  }
 
   const completedCount = SECTIONS.filter(s => s.complete).length
   const progress = completedCount / SECTIONS.length
@@ -46,8 +65,11 @@ export default function EditProfileScreen() {
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.saveBtn}>Save</Text>
+        <TouchableOpacity onPress={handleSave} disabled={updateProfile.isPending}>
+          {updateProfile.isPending
+            ? <ActivityIndicator color={Colors.teal} size="small" />
+            : <Text style={styles.saveBtn}>Save</Text>
+          }
         </TouchableOpacity>
       </View>
 

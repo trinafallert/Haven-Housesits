@@ -11,6 +11,29 @@ export async function GET(req: NextRequest) {
   const corsOpt = handleCors(req)
   if (corsOpt) return corsOpt
 
+  const { searchParams } = req.nextUrl
+  const userId = searchParams.get('userId')
+
+  // Public profile lookup — no auth required
+  if (userId) {
+    const profile = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true, firstName: true, lastName: true,
+        avatar: true, tagline: true, bio: true, role: true,
+        membershipPlan: true, idVerified: true,
+        backgroundCheckStatus: true, averageRating: true, totalSits: true,
+        totalReviews: true, city: true, state: true,
+        createdAt: true,
+      },
+    })
+    if (!profile) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404, headers: corsHeaders() })
+    }
+    return NextResponse.json({ profile }, { headers: corsHeaders() })
+  }
+
+  // Own profile — auth required
   const { error, user } = await requireAuth(req)
   if (error) return new NextResponse(error.body, { status: error.status, headers: corsHeaders() })
 

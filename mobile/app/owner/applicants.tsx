@@ -1,41 +1,120 @@
 import { useState } from 'react'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Image } from 'expo-image'
-import { useRouter } from 'expo-router'
+import { useRouter, useLocalSearchParams } from 'expo-router'
 import { Colors, Shadows } from '@/constants/colors'
+import { useApplications, useUpdateApplicationStatus } from '../../src/hooks'
 
-const APPLICANTS = [
-  {
-    id: '1', firstName: 'Sarah', lastName: 'Johnson', avatar: 'https://randomuser.me/api/portraits/women/32.jpg',
-    rating: 4.9, reviews: 47, sits: 62, verified: true, idCheck: true, bgCheck: true,
-    message: "Hi! I'm a retired teacher who has been house sitting for 4 years. I absolutely love animals and would treat your home with the utmost care. I have experience with dogs, cats, and small animals.",
-    appliedAt: '2 hours ago', addOns: ['🧹 Deep Clean', '📸 Pet Photos'],
-  },
-  {
-    id: '2', firstName: 'Marcus', lastName: 'Lee', avatar: 'https://randomuser.me/api/portraits/men/28.jpg',
-    rating: 4.7, reviews: 23, sits: 31, verified: true, idCheck: true, bgCheck: false,
-    message: "Hey! I work remotely so I can dedicate full attention to your pets. I have two dogs of my own (golden retrievers) so I'm very experienced. Would love to hear more about your listing!",
-    appliedAt: '5 hours ago', addOns: [],
-  },
-  {
-    id: '3', firstName: 'Emma', lastName: 'Torres', avatar: 'https://randomuser.me/api/portraits/women/65.jpg',
-    rating: 5.0, reviews: 12, sits: 15, verified: true, idCheck: true, bgCheck: true,
-    message: "I'm a vet tech with 8 years of experience caring for animals of all kinds. Your pets would be in excellent hands. I'm thorough, tidy, and always send daily photo updates!",
-    appliedAt: '1 day ago', addOns: ['📸 Pet Photos', '🪴 Plant Care'],
-  },
-]
+type App = {
+  id: string
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'COMPLETED'
+  message: string
+  createdAt: string
+  sitter: { id: string; firstName: string; lastName: string; avatar?: string | null; averageRating?: number | null }
+  listing: { id: string; title: string; city: string; state: string; startDate: string; endDate: string }
+  conversationId?: string
+}
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins < 60)  return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  return `${days}d ago`
+}
 
 export default function ApplicantsScreen() {
   const router = useRouter()
-  const [selected, setSelected]         = useState<typeof APPLICANTS[0] | null>(null)
-  const [confirmedId, setConfirmedId]   = useState<string | null>(null)
-  const [showReject, setShowReject]      = useState(false)
-  const [rejectMsg, setRejectMsg]        = useState('')
+  const { listingId } = useLocalSearchParams<{ listingId?: string }>()
+
+  const { data, isLoading } = useApplications('owner')
+  const updateStatus = useUpdateApplicationStatus()
+
+  const [selected,     setSelected]     = useState<App | null>(null)
+  const [showReject,   setShowReject]    = useState(false)
+  const [rejectMsg,    setRejectMsg]     = useState('')
   const [rejectTarget, setRejectTarget]  = useState<string | null>(null)
 
-  const confirm = (id: string) => { setConfirmedId(id); setSelected(null) }
-  const openReject = (id: string) => { setRejectTarget(id); setShowReject(true) }
+  // Filter by listingId if provided, otherwise show all
+  const apps: App[] = (data?.applications ?? []).filter(
+    (a: any) => !listingId || a.listing?.id === listingId
+  ) as App[]
+
+  const pending   = apps.filter(a => a.status === 'PENDING')
+  const confirmed = apps.filter(a => a.status === 'ACCEPTED')
+  const declined  = apps.filter(a => a.status === 'DECLINED')
+
+  async function handleConfirm(id: string) {
+    try {
+      await updateStatus.mutateAsync({ id, status: 'ACCEPTED' })
+      setSelected(null)
+    } catch {}
+  }
+
+  async function handleDecline(id: string) {
+    try {
+      await updateStatus.mutateAsync({ id, status: 'DECLINED' })
+      setShowReject(false)
+      setRejectTarget(null)
+    } catch {}
+  }
+
+  const renderCard = (a: App) => {
+    const isConfirmed = a.status === 'ACCEPTED'
+    const isDeclined  = a.status === 'DECLINED'
+
+    return (
+      <TouchableOpacity
+        key={a.id}
+        style={[styles.card, isConfirmed && styles.cardConfirmed, isDeclined && styles.cardDeclined]}
+        onPress={() => !isDeclined && setSelected(a)}
+        activeOpacity={0.85}
+      >
+        <View style={styles.cardTop}>
+          <Image
+            source={{ uri: a.sitter?.avatar ?? `https://ui-avatars.com/api/?name=${a.sitter?.firstName}+${a.sitter?.lastName}&background=5BA4A4&color=fff` }}
+            style={styles.avatar}
+            contentFit="cover"
+          />
+          <View style={{ flex: 1 }}>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>{a.sitter?.firstName} {a.sitter?.lastName}</Text>
+              {isConfirmed && <View style={styles.confirmedBadge}><Text style={styles.confirmedBadgeText}>✓ Confirmed</Text></View>}
+              {isDeclined  && <View style={styles.declinedBadge}><Text style={styles.declinedBadgeText}>Declined</Text></View>}
+            </View>
+            <View style={styles.ratingRow}>
+              <Text style={{ color: '#F59E0B' }}>★</Text>
+              <Text style={styles.ratingText}>{a.sitter?.averageRating?.toFixed(1) ?? '5.0'}</Text>
+            </View>
+          </View>
+          <Text style={styles.time}>{timeAgo(a.createdAt)}</Text>
+        </View>
+
+        <Text style={styles.msgPreview} numberOfLines={2}>{a.message}</Text>
+
+        {a.status === 'PENDING' && (
+          <View style={styles.actionsRow}>
+            <TouchableOpacity style={styles.rejectBtn} onPress={() => { setRejectTarget(a.id); setShowReject(true) }}>
+              <Text style={styles.rejectBtnText}>Decline</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.confirmBtn, updateStatus.isPending && { opacity: 0.6 }]}
+              disabled={updateStatus.isPending}
+              onPress={() => handleConfirm(a.id)}
+            >
+              {updateStatus.isPending && updateStatus.variables?.id === a.id
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.confirmBtnText}>✓ Confirm</Text>
+              }
+            </TouchableOpacity>
+          </View>
+        )}
+      </TouchableOpacity>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -45,75 +124,59 @@ export default function ApplicantsScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.listingBanner}>
-        <Text style={styles.listingTitle}>🏠 Beachside bungalow with two cats</Text>
-        <Text style={styles.listingDates}>Mar 15 – Apr 10 · {APPLICANTS.length} applicants</Text>
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}>
-        {APPLICANTS.map(a => (
-          <TouchableOpacity key={a.id} style={[styles.card, confirmedId === a.id && styles.cardConfirmed]} onPress={() => setSelected(a)} activeOpacity={0.85}>
-            <View style={styles.cardTop}>
-              <Image source={{ uri: a.avatar }} style={styles.avatar} contentFit="cover" />
-              <View style={{ flex: 1 }}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.name}>{a.firstName} {a.lastName}</Text>
-                  {confirmedId === a.id && <View style={styles.confirmedBadge}><Text style={styles.confirmedBadgeText}>✓ Confirmed</Text></View>}
-                </View>
-                <View style={styles.ratingRow}>
-                  <Text style={{ color: '#F59E0B' }}>★</Text>
-                  <Text style={styles.ratingText}>{a.rating} · {a.reviews} reviews · {a.sits} sits</Text>
-                </View>
-                <View style={styles.badgesRow}>
-                  {a.verified  && <View style={styles.badge}><Text style={styles.badgeText}>✓ ID</Text></View>}
-                  {a.bgCheck   && <View style={styles.badge}><Text style={styles.badgeText}>✓ BG Check</Text></View>}
-                </View>
-              </View>
-              <Text style={styles.time}>{a.appliedAt}</Text>
-            </View>
-
-            <Text style={styles.msgPreview} numberOfLines={2}>{a.message}</Text>
-
-            {a.addOns.length > 0 && (
-              <View style={styles.addOnsRow}>
-                <Text style={styles.addOnsLabel}>Add-ons offered: </Text>
-                <Text style={styles.addOnsValue}>{a.addOns.join(' · ')}</Text>
-              </View>
-            )}
-
-            {confirmedId !== a.id && (
-              <View style={styles.actionsRow}>
-                <TouchableOpacity style={styles.rejectBtn} onPress={() => openReject(a.id)}>
-                  <Text style={styles.rejectBtnText}>Decline</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.confirmBtn} onPress={() => confirm(a.id)}>
-                  <Text style={styles.confirmBtnText}>✓ Confirm</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      {isLoading ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color={Colors.teal} />
+        </View>
+      ) : apps.length === 0 ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+          <Text style={{ fontSize: 48, marginBottom: 16 }}>📭</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.navy }}>No applicants yet</Text>
+          <Text style={{ fontSize: 14, color: Colors.gray, marginTop: 8, textAlign: 'center' }}>
+            Applications will appear here once sitters start applying.
+          </Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}>
+          {pending.length > 0 && (
+            <>
+              <Text style={styles.groupLabel}>Pending ({pending.length})</Text>
+              {pending.map(renderCard)}
+            </>
+          )}
+          {confirmed.length > 0 && (
+            <>
+              <Text style={styles.groupLabel}>Confirmed ({confirmed.length})</Text>
+              {confirmed.map(renderCard)}
+            </>
+          )}
+          {declined.length > 0 && (
+            <>
+              <Text style={[styles.groupLabel, { color: Colors.gray }]}>Declined ({declined.length})</Text>
+              {declined.map(renderCard)}
+            </>
+          )}
+        </ScrollView>
+      )}
 
       {/* Applicant detail modal */}
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelected(null)}>
         {selected && (
           <SafeAreaView style={styles.modalSafe}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{selected.firstName}'s application</Text>
+              <Text style={styles.modalTitle}>{selected.sitter?.firstName}'s application</Text>
               <TouchableOpacity onPress={() => setSelected(null)}><Text style={styles.modalClose}>✕</Text></TouchableOpacity>
             </View>
             <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
               <View style={styles.modalProfile}>
-                <Image source={{ uri: selected.avatar }} style={styles.modalAvatar} contentFit="cover" />
+                <Image
+                  source={{ uri: selected.sitter?.avatar ?? `https://ui-avatars.com/api/?name=${selected.sitter?.firstName}&background=5BA4A4&color=fff` }}
+                  style={styles.modalAvatar}
+                  contentFit="cover"
+                />
                 <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={styles.modalName}>{selected.firstName} {selected.lastName}</Text>
-                  <Text style={styles.modalStats}>★ {selected.rating} · {selected.reviews} reviews · {selected.sits} completed sits</Text>
-                  <View style={styles.badgesRow}>
-                    {selected.verified  && <View style={styles.badge}><Text style={styles.badgeText}>✓ ID Verified</Text></View>}
-                    {selected.idCheck   && <View style={styles.badge}><Text style={styles.badgeText}>✓ ID Check</Text></View>}
-                    {selected.bgCheck   && <View style={styles.badge}><Text style={styles.badgeText}>✓ BG Check</Text></View>}
-                  </View>
+                  <Text style={styles.modalName}>{selected.sitter?.firstName} {selected.sitter?.lastName}</Text>
+                  <Text style={styles.modalStats}>★ {selected.sitter?.averageRating?.toFixed(1) ?? '5.0'}</Text>
                 </View>
               </View>
 
@@ -121,29 +184,34 @@ export default function ApplicantsScreen() {
                 <Text style={styles.sectionTitle}>Their message</Text>
                 <Text style={styles.messageText}>{selected.message}</Text>
               </View>
-
-              {selected.addOns.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Add-ons they'll provide</Text>
-                  {selected.addOns.map((a, i) => (
-                    <View key={i} style={styles.addOnRow}><Text style={styles.addOnItem}>{a}</Text></View>
-                  ))}
-                </View>
-              )}
             </ScrollView>
             <View style={styles.modalFooter}>
-              <TouchableOpacity style={styles.msgBtn} onPress={() => setSelected(null)}>
-                <Text style={styles.msgBtnText}>💬 Message {selected.firstName}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.bigConfirmBtn} onPress={() => confirm(selected.id)}>
-                <Text style={styles.bigConfirmBtnText}>✓ Confirm this sitter</Text>
-              </TouchableOpacity>
+              {selected.conversationId && (
+                <TouchableOpacity
+                  style={styles.msgBtn}
+                  onPress={() => { setSelected(null); router.push(`/inbox/${selected.conversationId}`) }}
+                >
+                  <Text style={styles.msgBtnText}>💬 Message {selected.sitter?.firstName}</Text>
+                </TouchableOpacity>
+              )}
+              {selected.status === 'PENDING' && (
+                <TouchableOpacity
+                  style={[styles.bigConfirmBtn, updateStatus.isPending && { opacity: 0.6 }]}
+                  disabled={updateStatus.isPending}
+                  onPress={() => handleConfirm(selected.id)}
+                >
+                  {updateStatus.isPending
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={styles.bigConfirmBtnText}>✓ Confirm this sitter</Text>
+                  }
+                </TouchableOpacity>
+              )}
             </View>
           </SafeAreaView>
         )}
       </Modal>
 
-      {/* Reject modal */}
+      {/* Decline modal */}
       <Modal visible={showReject} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowReject(false)}>
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
@@ -151,10 +219,24 @@ export default function ApplicantsScreen() {
             <TouchableOpacity onPress={() => setShowReject(false)}><Text style={styles.modalClose}>✕</Text></TouchableOpacity>
           </View>
           <View style={{ padding: 20, gap: 16 }}>
-            <Text style={styles.rejectHint}>Send a kind note (optional — they won't see your profile after this)</Text>
-            <TextInput style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]} value={rejectMsg} onChangeText={setRejectMsg} multiline placeholder="Thanks for applying! We went with someone else this time..." placeholderTextColor={Colors.grayLight} />
-            <TouchableOpacity style={styles.sendDeclineBtn} onPress={() => { setShowReject(false); setRejectTarget(null) }}>
-              <Text style={styles.sendDeclineBtnText}>Send & decline</Text>
+            <Text style={styles.rejectHint}>Send a kind note (optional)</Text>
+            <TextInput
+              style={[styles.input, { minHeight: 100, textAlignVertical: 'top' }]}
+              value={rejectMsg}
+              onChangeText={setRejectMsg}
+              multiline
+              placeholder="Thanks for applying! We went with someone else this time..."
+              placeholderTextColor={Colors.grayLight}
+            />
+            <TouchableOpacity
+              style={[styles.sendDeclineBtn, updateStatus.isPending && { opacity: 0.6 }]}
+              disabled={updateStatus.isPending}
+              onPress={() => rejectTarget && handleDecline(rejectTarget)}
+            >
+              {updateStatus.isPending
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.sendDeclineBtnText}>Send & decline</Text>
+              }
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -169,27 +251,22 @@ const styles = StyleSheet.create({
   header:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.sand },
   back:               { fontSize: 22, color: C.navy, padding: 4 },
   headerTitle:        { fontSize: 17, fontWeight: '700', color: C.navy },
-  listingBanner:      { backgroundColor: C.navy, padding: 16, gap: 4 },
-  listingTitle:       { fontSize: 15, fontWeight: '700', color: '#fff' },
-  listingDates:       { fontSize: 13, color: 'rgba(255,255,255,0.7)' },
+  groupLabel:         { fontSize: 13, fontWeight: '700', color: C.tealDark, paddingVertical: 4 },
   card:               { backgroundColor: C.white, borderRadius: 16, padding: 14, gap: 10, ...S.card },
   cardConfirmed:      { borderWidth: 2, borderColor: '#10B981' },
+  cardDeclined:       { opacity: 0.55 },
   cardTop:            { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   avatar:             { width: 52, height: 52, borderRadius: 26 },
   nameRow:            { flexDirection: 'row', alignItems: 'center', gap: 8 },
   name:               { fontSize: 15, fontWeight: '700', color: C.navy },
   confirmedBadge:     { backgroundColor: '#D1FAE5', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   confirmedBadgeText: { fontSize: 11, fontWeight: '700', color: '#065F46' },
+  declinedBadge:      { backgroundColor: '#FEE2E2', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  declinedBadgeText:  { fontSize: 11, fontWeight: '700', color: '#991B1B' },
   ratingRow:          { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   ratingText:         { fontSize: 13, color: C.gray },
-  badgesRow:          { flexDirection: 'row', gap: 6, marginTop: 4, flexWrap: 'wrap' },
-  badge:              { backgroundColor: C.tealPale, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText:          { fontSize: 11, fontWeight: '600', color: C.tealDark },
   time:               { fontSize: 12, color: C.grayLight },
   msgPreview:         { fontSize: 13, color: C.gray, lineHeight: 20 },
-  addOnsRow:          { flexDirection: 'row', alignItems: 'center', backgroundColor: C.grayPale, borderRadius: 8, padding: 8 },
-  addOnsLabel:        { fontSize: 12, fontWeight: '600', color: C.gray },
-  addOnsValue:        { fontSize: 12, color: C.tealDark },
   actionsRow:         { flexDirection: 'row', gap: 10 },
   rejectBtn:          { flex: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1.5, borderColor: C.sand },
   rejectBtnText:      { fontSize: 14, fontWeight: '600', color: C.gray },
@@ -206,8 +283,6 @@ const styles = StyleSheet.create({
   section:            { gap: 8 },
   sectionTitle:       { fontSize: 15, fontWeight: '700', color: C.navy },
   messageText:        { fontSize: 14, color: C.gray, lineHeight: 22 },
-  addOnRow:           { backgroundColor: C.tealPale, borderRadius: 10, padding: 10 },
-  addOnItem:          { fontSize: 14, color: C.tealDark, fontWeight: '600' },
   modalFooter:        { padding: 20, gap: 10, borderTopWidth: 1, borderTopColor: C.sand },
   msgBtn:             { borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1.5, borderColor: C.teal },
   msgBtnText:         { fontSize: 15, fontWeight: '600', color: C.teal },
