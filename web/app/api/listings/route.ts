@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
   const city     = searchParams.get('city') ?? undefined
   const startDate= searchParams.get('startDate') ?? undefined
   const endDate  = searchParams.get('endDate') ?? undefined
-  const minDays  = searchParams.get('minDays')  ? parseInt(searchParams.get('minDays')!) : undefined
   const search   = searchParams.get('search') ?? undefined
+  const minDays  = searchParams.get('minDays') ? parseInt(searchParams.get('minDays')!) : undefined
   const dogWalk  = searchParams.get('dogWalkReq') ?? undefined
   const autoLitter = searchParams.get('hasAutoLitterBox')
 
@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
       { title:       { contains: search, mode: 'insensitive' } },
       { city:        { contains: search, mode: 'insensitive' } },
       { country:     { contains: search, mode: 'insensitive' } },
+      { state:       { contains: search, mode: 'insensitive' } },
       { description: { contains: search, mode: 'insensitive' } },
     ]} : {}),
   }
@@ -45,16 +46,26 @@ export async function GET(req: NextRequest) {
       take: limit,
       orderBy: [{ createdAt: 'desc' }],
       include: {
-        owner: { select: { id: true, firstName: true, lastName: true, avatar: true, averageRating: true, totalSits: true } },
-        pets:  { select: { type: true, name: true } },
+        owner: { select: { id: true, firstName: true, lastName: true, avatar: true, averageRating: true, totalSits: true, idVerified: true } },
+        pets:  { select: { type: true, name: true, breed: true, age: true } },
         _count: { select: { applications: true } },
       },
     }),
     prisma.listing.count({ where }),
   ])
 
+  // Client-side minDays filter (duration = endDate - startDate in days)
+  const filtered = minDays
+    ? listings.filter(l => {
+        const days = Math.round(
+          (new Date(l.endDate).getTime() - new Date(l.startDate).getTime()) / (1000 * 60 * 60 * 24)
+        )
+        return days >= minDays
+      })
+    : listings
+
   return NextResponse.json({
-    listings,
+    listings: filtered,
     pagination: { page, limit, total, pages: Math.ceil(total / limit) },
   })
 }

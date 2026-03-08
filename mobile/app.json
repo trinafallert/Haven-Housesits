@@ -23,8 +23,14 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Haven uses your location to show nearby house sits.",
-        "NSPhotoLibraryUsageDescription": "Haven needs photo access to let you upload profile and listing photos.",
-        "NSCameraUsageDescription": "Haven needs camera access to take profile photos."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Haven uses your location to show nearby house sits.",
+        "NSPhotoLibraryUsageDescription": "Haven needs access to your photos to upload profile and listing photos.",
+        "NSCameraUsageDescription": "Haven needs camera access to take profile and listing photos.",
+        "NSPhotoLibraryAddUsageDescription": "Haven saves photos to your library.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "googleMapsApiKey": "YOUR_IOS_GOOGLE_MAPS_KEY"
       }
     },
     "android": {
@@ -36,13 +42,21 @@
       "versionCode": 1,
       "permissions": [
         "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "READ_MEDIA_IMAGES",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "CAMERA"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_ANDROID_GOOGLE_MAPS_KEY"
+        }
+      }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
@@ -50,16 +64,29 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Haven needs access to your photos to upload profile pictures."
+          "photosPermission": "Haven needs access to your photos to upload profile and listing photos.",
+          "cameraPermission": "Haven needs camera access to take photos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Haven uses your location to show nearby house sits."
         }
       ],
       "expo-font"
     ],
     "scheme": "havenhousesits",
+    "updates": {
+      "url": "https://u.expo.dev/YOUR_EAS_PROJECT_ID"
+    },
     "extra": {
       "eas": {
         "projectId": "YOUR_EAS_PROJECT_ID"
-      }
+      },
+      "privacyPolicyUrl": "https://havenhousesits.com/privacy",
+      "termsUrl": "https://havenhousesits.com/terms",
+      "supportEmail": "support@havenhousesits.com"
     }
   }
 }

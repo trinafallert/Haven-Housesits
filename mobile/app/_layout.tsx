@@ -72,6 +72,7 @@ function RootNavigator() {
         <Stack.Screen name="profile/edit-preferences" options={{ presentation: 'card' }} />
         <Stack.Screen name="profile/edit-references" options={{ presentation: 'card' }} />
         <Stack.Screen name="profile/edit-verification" options={{ presentation: 'card' }} />
+        <Stack.Screen name="profile/edit-experience" options={{ presentation: 'card' }} />
         <Stack.Screen name="notifications" options={{ presentation: 'card' }} />
       </Stack>
     </>

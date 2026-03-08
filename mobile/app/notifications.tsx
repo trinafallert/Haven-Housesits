@@ -34,6 +34,7 @@ export default function NotificationsScreen() {
     const mins  = Math.floor(diff / 60000)
     const hours = Math.floor(diff / 3600000)
     const days  = Math.floor(diff / 86400000)
+    if (mins < 1)   return 'Just now'
     if (mins < 60)  return `${mins}m ago`
     if (hours < 24) return `${hours}h ago`
     return `${days}d ago`
@@ -87,7 +88,7 @@ export default function NotificationsScreen() {
                 <Text style={styles.itemBody} numberOfLines={2}>{item.body}</Text>
                 <Text style={styles.itemTime}>{timeAgo(item.createdAt)}</Text>
               </View>
-              {!item.isRead && <View style={styles.dot} />}
+              {!item.isRead && <View style={styles.unreadDot} />}
             </TouchableOpacity>
           )}
         />
@@ -97,20 +98,20 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1, backgroundColor: Colors.cream },
-  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.sand },
-  backBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: Colors.navy },
-  empty:       { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 40 },
-  emptyEmoji:  { fontSize: 56 },
-  emptyTitle:  { fontSize: 20, fontWeight: '800', color: Colors.navy },
+  safe:          { flex: 1, backgroundColor: Colors.cream },
+  header:        { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: Colors.sand },
+  backBtn:       { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerTitle:   { fontSize: 18, fontWeight: '700', color: Colors.navy },
+  empty:         { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 40 },
+  emptyEmoji:    { fontSize: 56 },
+  emptyTitle:    { fontSize: 20, fontWeight: '800', color: Colors.navy },
   emptySubtitle: { fontSize: 15, color: Colors.gray, textAlign: 'center', lineHeight: 22 },
-  list:        { padding: 12, gap: 2 },
-  item:        { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 14, borderRadius: 14, backgroundColor: Colors.white, ...Shadows.card, marginBottom: 6 },
-  itemUnread:  { backgroundColor: '#EFF8F8', borderLeftWidth: 3, borderLeftColor: Colors.teal },
-  iconWrap:    { width: 44, height: 44, borderRadius: 14, backgroundColor: Colors.tealPale, alignItems: 'center', justifyContent: 'center' },
-  itemTitle:   { fontSize: 15, fontWeight: '700', color: Colors.navy, marginBottom: 2 },
-  itemBody:    { fontSize: 13, color: Colors.gray, lineHeight: 18 },
-  itemTime:    { fontSize: 11, color: Colors.grayLight, marginTop: 4 },
-  dot:         { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.teal, marginTop: 6 },
+  list:          { padding: 12, gap: 2 },
+  item:          { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 14, borderRadius: 14, backgroundColor: Colors.white, ...Shadows.card, marginBottom: 6 },
+  itemUnread:    { backgroundColor: '#EFF8F8', borderLeftWidth: 3, borderLeftColor: Colors.teal },
+  iconWrap:      { width: 44, height: 44, borderRadius: 14, backgroundColor: Colors.tealPale, alignItems: 'center', justifyContent: 'center' },
+  itemTitle:     { fontSize: 15, fontWeight: '700', color: Colors.navy, marginBottom: 2 },
+  itemBody:      { fontSize: 13, color: Colors.gray, lineHeight: 18 },
+  itemTime:      { fontSize: 11, color: Colors.grayLight, marginTop: 4 },
+  unreadDot:     { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.teal, marginTop: 6 },
 })

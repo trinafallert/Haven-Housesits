@@ -76,6 +76,8 @@ interface FilterState {
   carIncluded: boolean
   familyFriendly: boolean
   minDuration: string | null
+  arriveAfter: string
+  leaveBefore: string
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -87,6 +89,8 @@ const DEFAULT_FILTERS: FilterState = {
   carIncluded: false,
   familyFriendly: false,
   minDuration: null,
+  arriveAfter: '',
+  leaveBefore: '',
 }
 
 function getDurationDays(listing: Listing): number {
@@ -307,7 +311,7 @@ function FilterPanel({
     })
   }
 
-  const reset = () => setLocal({ ...DEFAULT_FILTERS })
+  const reset = () => setLocal({ ...DEFAULT_FILTERS, arriveAfter: '', leaveBefore: '' })
 
   // Sync local state when filters prop changes
   const handleOpen = () => setLocal(filters)
@@ -333,6 +337,31 @@ function FilterPanel({
         </View>
 
         <ScrollView style={styles.filterScroll} showsVerticalScrollIndicator={false}>
+
+          {/* Travel dates */}
+          <Text style={styles.filterSection}>Travel dates</Text>
+          <View style={styles.dateFilterRow}>
+            <View style={styles.dateFilterField}>
+              <Text style={styles.dateFilterLabel}>Arrive after</Text>
+              <TextInput
+                style={styles.dateFilterInput}
+                value={local.arriveAfter}
+                onChangeText={v => setLocal(prev => ({ ...prev, arriveAfter: v }))}
+                placeholder="Mar 15 2026"
+                placeholderTextColor={Colors.grayLight}
+              />
+            </View>
+            <View style={styles.dateFilterField}>
+              <Text style={styles.dateFilterLabel}>Leave before</Text>
+              <TextInput
+                style={styles.dateFilterInput}
+                value={local.leaveBefore}
+                onChangeText={v => setLocal(prev => ({ ...prev, leaveBefore: v }))}
+                placeholder="Jun 30 2026"
+                placeholderTextColor={Colors.grayLight}
+              />
+            </View>
+          </View>
 
           {/* Duration */}
           <Text style={styles.filterSection}>Sit duration</Text>
@@ -489,9 +518,15 @@ export default function SearchScreen() {
 
   const petTypeParam = filters.selectedPets.length === 1 ? filters.selectedPets[0] : undefined
 
+  // Parse date filter inputs
+  const startDateParam = filters.arriveAfter ? new Date(filters.arriveAfter).toISOString() : undefined
+  const endDateParam   = filters.leaveBefore ? new Date(filters.leaveBefore).toISOString()  : undefined
+
   const { data, isLoading, refetch, isRefetching } = useListings({
-    sitType: sitTypeParam,
-    petType: petTypeParam,
+    sitType:   sitTypeParam,
+    petType:   petTypeParam,
+    startDate: startDateParam,
+    endDate:   endDateParam,
   })
 
   const allListings = data?.listings ?? []
@@ -560,6 +595,8 @@ export default function SearchScreen() {
     filters.familyFriendly,
     filters.minDuration !== null,
     filters.sortBy !== 'RECOMMENDED',
+    filters.arriveAfter !== '',
+    filters.leaveBefore !== '',
   ].filter(Boolean).length
 
   return (
@@ -567,6 +604,9 @@ export default function SearchScreen() {
 
       {/* ── Search bar ── */}
       <View style={styles.searchBarWrap}>
+        <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notifications')}>
+          <Text style={{ fontSize: 20 }}>🔔</Text>
+        </TouchableOpacity>
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
@@ -741,7 +781,8 @@ const styles = StyleSheet.create({
   container:      { flex: 1, backgroundColor: Colors.cream },
 
   // Search bar
-  searchBarWrap:  { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 10 },
+  searchBarWrap:  { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+  bellBtn:        { width: 44, height: 44, borderRadius: 12, backgroundColor: Colors.white, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: Colors.sand, ...Shadows.card },
   searchBar:      { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.white, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, gap: 8, borderWidth: 1, borderColor: Colors.sand, ...Shadows.card },
   searchIcon:     { fontSize: 16 },
   searchInput:    { flex: 1, fontSize: 15, color: Colors.navy },
@@ -842,6 +883,12 @@ const styles = StyleSheet.create({
   filterClear:      { fontSize: 15, color: Colors.teal, fontWeight: '600' },
   filterScroll:     { flex: 1 },
   filterSection:    { fontSize: 16, fontWeight: '700', color: Colors.navy, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 },
+
+  // Date filter
+  dateFilterRow:   { flexDirection: 'row', gap: 10, paddingHorizontal: 20 },
+  dateFilterField: { flex: 1, gap: 6 },
+  dateFilterLabel: { fontSize: 12, fontWeight: '600', color: Colors.gray, marginBottom: 2 },
+  dateFilterInput: { backgroundColor: Colors.white, borderRadius: 12, padding: 12, fontSize: 14, color: Colors.navy, borderWidth: 1.5, borderColor: Colors.sand },
 
   // Duration chips (horizontal scroll)
   durationRow:      { paddingHorizontal: 20, gap: 8 },
