@@ -17,12 +17,11 @@ const { width } = Dimensions.get('window')
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TOP_TABS = [
-  { key: 'ALL',       label: 'All' },
-  { key: 'PAID',      label: 'Paid 💰' },
-  { key: 'HOUSESITS', label: 'Housesits' },
-  { key: 'PET_SITS',  label: 'Pet Sits' },
-  { key: 'VACANT',    label: 'Vacant' },
-  { key: 'LONG_TERM', label: 'Long-term' },
+  { key: 'ALL',        label: 'All' },
+  { key: 'FREE_SITS',  label: 'Free Sits 🏡' },
+  { key: 'PAID',       label: 'Paid 💰' },
+  { key: 'VACANT',     label: 'Vacant Homes' },
+  { key: 'LONG_TERM',  label: 'Long-term' },
 ]
 
 const DURATION_OPTIONS = [
@@ -535,9 +534,8 @@ export default function SearchScreen() {
     let result = [...allListings]
 
     // Tab filters handled client-side
-    if (activeTab === 'PET_SITS')  result = result.filter(l => (l.pets ?? []).length > 0)
-    if (activeTab === 'VACANT')    result = result.filter(l => (l.pets ?? []).length === 0)
-    if (activeTab === 'HOUSESITS') result = result.filter(l => ['FREE', 'PAID'].includes(l.sitType))
+    if (activeTab === 'FREE_SITS') result = result.filter(l => l.sitType !== 'PAID')
+    if (activeTab === 'VACANT')    result = result.filter(l => (l.pets ?? []).length === 0 && l.sitType !== 'PAID')
 
     // Multiple pet type filters (when more than 1 selected)
     if (filters.selectedPets.length > 1) {
