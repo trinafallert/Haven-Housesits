@@ -40,8 +40,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'You cannot apply to your own listing' }, { status: 400 })
   }
 
-  // Check max applications cap (Haven default: 10, owner can set 1–15)
-  if (listing._count.applications >= listing.maxApplications) {
+  // Check max applications cap (Haven default: 7)
+  // Count only non-declined apps — when owner declines one, a new slot opens
+  const activeApplicationCount = await prisma.application.count({
+    where: { listingId, status: { not: 'DECLINED' } },
+  })
+  const cap = listing.maxApplications
+  if (activeApplicationCount >= cap) {
     return NextResponse.json({ error: 'This listing has reached its maximum applications' }, { status: 400 })
   }
 

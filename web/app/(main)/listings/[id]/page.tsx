@@ -14,6 +14,7 @@ import { prisma } from '@/lib/prisma'
 import { formatDateRange, sitDuration, PET_ICONS, PET_LABELS } from '@/lib/utils'
 import { ApplicationPanel } from '@/components/listings/application-panel'
 import ReviewList from '@/components/ReviewList'
+import PaidSitEscrowBanner from '@/components/PaidSitEscrowBanner'
 
 async function getListing(id: string) {
   try {
@@ -217,17 +218,7 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
 
             {/* Paid sit escrow notice */}
             {listing.isPaid && (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-4">
-                <Shield className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-amber-800 mb-1">Secure payment — held in escrow</p>
-                  <p className="text-sm text-amber-700">
-                    The owner's payment is held securely by Haven until your sit is complete.
-                    Funds are released to you within 24 hours of sit completion.
-                    Tips can be added by the owner at any time after the sit.
-                  </p>
-                </div>
-              </div>
+              <PaidSitEscrowBanner sitRate={listing.price ?? undefined} />
             )}
 
             {/* Owner info */}

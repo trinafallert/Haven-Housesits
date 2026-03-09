@@ -329,7 +329,7 @@ model Listing {
   nearMountains   Boolean @default(false)
 
   // Application settings
-  maxApplications   Int     @default(10) // Haven allows more than TH's 4!
+  maxApplications   Int     @default(7) // Max 7 active (non-declined) applications — when one is declined, a new slot opens
   currentApplicants Int     @default(0)
 
   // Photos

@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, Send, Image as ImageIcon, Phone, Video, MoreVertical, CheckCircle2, Clock, XCircle, Star } from 'lucide-react'
+import { ArrowLeft, Send, Image as ImageIcon, Phone, Video, MoreVertical, CheckCircle2, Clock, XCircle, Star, ShieldCheck } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
 import { formatRelative } from '@/lib/utils'
 
 /* ─── Mock data ─── */
 const MOCK_THREAD = {
   id: 'c2',
+  isPaidSit: true,   // ← controls the safety banner
   participant: {
     id: 'u2',
     firstName: 'Michael',
@@ -166,6 +167,16 @@ export default function MessageThreadPage() {
           </div>
         </div>
       </Link>
+
+      {/* ─── Paid Sit Safety Banner ─── */}
+      {thread.isPaidSit && (
+        <div className="bg-haven-teal/10 border-b border-haven-teal/20 px-4 py-2 flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-haven-teal flex-shrink-0" />
+          <p className="text-xs text-haven-teal-dark font-medium leading-snug">
+            💳 <strong>Keep your booking safe</strong> — complete your booking on Haven to get secure payment protection, 24/7 support, and guaranteed payment for sitters.
+          </p>
+        </div>
+      )}
 
       {/* ─── Message list ─── */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">

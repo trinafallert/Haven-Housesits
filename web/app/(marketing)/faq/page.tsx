@@ -53,7 +53,7 @@ const FAQ_SECTIONS = [
     faqs: [
       {
         q: 'How many applicants will I get?',
-        a: "Haven allows up to 10 applications per listing by default (you can set it between 5–15). This is double TrustedHousesitters' 5-applicant cap — giving you more choice and a backup if your first choice cancels.",
+        a: "Haven allows up to 7 active applications per listing. When you decline one, a new applicant can come in automatically — so you always have a full backup pool. Unlike TrustedHousesitters where declining closes the slot forever.",
       },
       {
         q: 'How do paid sits work?',

@@ -61,7 +61,7 @@ const whyHaven = [
   },
   {
     icon: <Zap className="h-6 w-6" />,
-    title: 'No 5-applicant cap',
+    title: 'Smart application pool',
     desc: 'Owners can receive more applications, reducing last-minute cancellation stress.',
   },
   {
@@ -128,7 +128,7 @@ const testimonials = [
 const faqs = [
   {
     q: 'How is Haven different from TrustedHousesitters?',
-    a: 'Haven offers paid sits alongside free exchange sits, has no 5-applicant cap, charges lower membership fees, includes premium add-ons like deep cleaning, lets owners tip sitters, and provides 24/7 live human support.',
+    a: 'Haven offers paid sits alongside free exchange sits, has a smart rolling application pool (up to 7 active applicants — declining one opens a new slot), charges lower membership fees, includes premium add-ons like deep cleaning, lets owners tip sitters, and provides 24/7 live human support.',
   },
   {
     q: 'Can I browse paid sits by location?',
