@@ -15,10 +15,10 @@ const PAID_PERKS = [
 ]
 
 const STATS = [
-  { value: '2,400+', label: 'Paid sits available now' },
-  { value: '$52', label: 'Average nightly rate' },
-  { value: '120+', label: 'Countries with paid sits' },
-  { value: '4.9★', label: 'Average sitter rating' },
+  { value: 'Global', label: 'Paid sits available worldwide' },
+  { value: '$30–100', label: 'Typical nightly rate range' },
+  { value: '8%', label: 'Platform fee (sitters keep the rest)' },
+  { value: '24hr', label: 'Payout after sit completes' },
 ]
 
 const HOW_IT_WORKS = [
@@ -169,7 +169,7 @@ export default function PaidSitsPage() {
       <section className="py-20 bg-white">
         <div className="container-haven text-center">
           <h2 className="section-title mb-4">Ready to get paid to travel?</h2>
-          <p className="text-haven-gray mb-8 max-w-xl mx-auto">Join thousands of sitters earning while exploring the world.</p>
+          <p className="text-haven-gray mb-8 max-w-xl mx-auto">A global community of sitters earning while exploring the world — and growing daily.</p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
               href="/haven/search?type=PAID"

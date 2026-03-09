@@ -43,10 +43,10 @@ export default function AboutPage() {
         <div className="container-haven">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: '50,000+', label: 'Verified sitters' },
-              { value: '120+',    label: 'Countries' },
-              { value: '4.9★',   label: 'Average rating' },
-              { value: '$0',      label: 'To get started' },
+              { value: 'Global', label: 'Sits worldwide & growing' },
+              { value: '4.9★',   label: 'Average member rating' },
+              { value: '3 mo',   label: 'Free to start' },
+              { value: '24/7',   label: 'Real human support' },
             ].map((s) => (
               <div key={s.label}>
                 <div className="font-display text-3xl font-bold text-haven-teal-light">{s.value}</div>

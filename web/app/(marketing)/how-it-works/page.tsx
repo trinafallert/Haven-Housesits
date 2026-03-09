@@ -234,7 +234,7 @@ export default function HowItWorksPage() {
       <section className="py-16 gradient-hero text-center">
         <div className="container-haven max-w-xl">
           <h2 className="font-display text-4xl font-bold text-haven-navy mb-3">Ready to start?</h2>
-          <p className="text-haven-gray mb-8">Join thousands of sitters and home owners. First 3 months completely free.</p>
+          <p className="text-haven-gray mb-8">A global community of sitters and owners, growing daily. First 3 months completely free.</p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/signup"><Button size="lg">Get started free</Button></Link>
             <Link href="/search"><Button size="lg" variant="secondary">Browse sits</Button></Link>

@@ -11,10 +11,10 @@ import {
 // ─── Static data for the landing page ────────────────────────────────────────
 
 const stats = [
-  { value: '50,000+', label: 'Verified sitters' },
-  { value: '120+',    label: 'Countries' },
-  { value: '4.9★',    label: 'Average rating' },
-  { value: '$0',      label: 'Starting price' },
+  { value: 'Global', label: 'Sits worldwide & growing' },
+  { value: '4.9★',   label: 'Average member rating' },
+  { value: '3 mo',   label: 'Free to start' },
+  { value: '24/7',   label: 'Real human support' },
 ]
 
 const sitTypes = [
@@ -34,15 +34,15 @@ const sitTypes = [
   },
   {
     icon: '🏠',
-    title: 'Vacant Sits',
-    desc: 'No pets? No problem. Find someone to watch your home while you travel.',
+    title: 'Vacant Homes',
+    desc: 'No pets? No problem. Find a trusted sitter to keep your home safe while you travel.',
     badge: null,
     badgeVariant: 'teal' as const,
   },
   {
     icon: '📅',
     title: 'Long-term Sits',
-    desc: '30+ day sits with flexible terms — ideal for extended travel.',
+    desc: '30+ day sits with flexible arrangements — utilities-only, rent-share, or fully paid. Perfect for extended travel.',
     badge: null,
     badgeVariant: 'teal' as const,
   },
@@ -51,8 +51,8 @@ const sitTypes = [
 const whyHaven = [
   {
     icon: <DollarSign className="h-6 w-6" />,
-    title: 'More affordable than the rest',
-    desc: 'Memberships start lower than competitors — same trust, better value. No surprise fees.',
+    title: 'Up to 50% less than TrustedHousesitters',
+    desc: 'Standard from $79/yr vs THS at $129/yr. Same level of trust, verification, and protection — for less.',
   },
   {
     icon: <Search className="h-6 w-6" />,
@@ -162,7 +162,7 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <Badge variant="teal" className="mb-6">
               <Sparkles className="h-3 w-3" />
-              Free & paid sits in one place
+              3 months free — no credit card needed
             </Badge>
 
             <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-haven-navy leading-tight mb-6">
@@ -172,9 +172,9 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg md:text-xl text-haven-gray leading-relaxed mb-10 max-w-2xl">
-              Haven connects verified home owners with trusted sitters worldwide —
-              free exchange sits, paid sits you can actually browse, and premium add-ons
-              that make every sit exceptional.
+              The housesitting platform that's actually affordable. Browse free exchange sits,
+              paid sits by destination, and long-term arrangements — all in one place,
+              at half the price of TrustedHousesitters.
             </p>
 
             {/* Search bar */}
@@ -249,9 +249,9 @@ export default function HomePage() {
       <section className="py-20 container-haven">
         <div className="text-center mb-12">
           <Badge variant="teal" className="mb-4">All types, one platform</Badge>
-          <h2 className="section-title mb-4">Every kind of sit, covered</h2>
+          <h2 className="section-title mb-4">Every kind of sit, one platform</h2>
           <p className="text-haven-gray max-w-xl mx-auto">
-            Whether you want a free exchange or need a paid sitter fast — Haven has you covered.
+            Free exchanges, paid sits, vacant homes, long-term arrangements — browse them all in one feed.
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -273,9 +273,9 @@ export default function HomePage() {
         <div className="container-haven">
           <div className="text-center mb-12">
             <Badge variant="teal" className="mb-4">Why Haven</Badge>
-            <h2 className="section-title mb-4">Built to be better — for everyone</h2>
+            <h2 className="section-title mb-4">Everything the other apps got wrong — fixed</h2>
             <p className="text-haven-gray max-w-xl mx-auto">
-              We took everything people love about housesitting apps and fixed what was frustrating.
+              We started Haven because TrustedHousesitters was expensive, Rover was city-locked, and none of them paid sitters fairly.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -419,14 +419,14 @@ export default function HomePage() {
             </div>
             <div className="relative">
               <Badge className="mb-6 bg-white/20 text-white border-0">
-                <Clock className="h-3 w-3" /> Limited time offer
+                <Sparkles className="h-3 w-3" /> Sitters and owners worldwide
               </Badge>
               <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-                Start your adventure today
+                Try Haven free for 3 months
               </h2>
               <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-                Join for free and get 2 months of Premium membership included.
-                No credit card required.
+                Every new account gets 3 months of Premium — no credit card, no commitment.
+                Then just $9/month. Cancel anytime.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/signup">

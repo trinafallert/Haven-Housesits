@@ -16,7 +16,7 @@ const plans = [
   {
     id: 'explorer',
     name: 'Explorer',
-    tagline: 'Try Haven, no strings attached',
+    tagline: 'See if Haven is right for you',
     monthlyPrice: 0,
     annualPrice: 0,
     badge: null,
@@ -39,7 +39,7 @@ const plans = [
   {
     id: 'standard',
     name: 'Standard',
-    tagline: 'Everything you need to sit or list',
+    tagline: 'For sitters and owners who are serious',
     monthlyPrice: 9,
     annualPrice: 79,
     badge: 'Most popular',
@@ -62,7 +62,7 @@ const plans = [
   {
     id: 'premium',
     name: 'Premium',
-    tagline: 'Maximum protection & perks',
+    tagline: 'Every feature, maximum protection',
     monthlyPrice: 14,
     annualPrice: 129,
     badge: 'Best value',
@@ -120,7 +120,7 @@ export default function PricingPage() {
         </h1>
         <p className="text-haven-gray text-xl max-w-2xl mx-auto mb-4">
           Up to <span className="font-semibold text-haven-teal">50% cheaper</span> than TrustedHousesitters.
-          Every plan starts with 3 months completely free — no credit card needed.
+          Start with 3 months completely free — no credit card, no commitment, cancel anytime.
         </p>
         <p className="text-sm text-haven-gray-light">
           Already paying for another housesitting app?{' '}
@@ -406,7 +406,7 @@ export default function PricingPage() {
           </h2>
           <p className="text-haven-gray mb-8 max-w-md mx-auto">
             No credit card. No commitment. 3 months free on any paid plan.
-            Join thousands already using Haven.
+            A growing community of sitters and owners worldwide.
           </p>
           <Link href="/signup">
             <Button size="xl" rightIcon={<ArrowRight className="h-5 w-5" />}>
