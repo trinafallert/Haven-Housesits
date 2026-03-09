@@ -13,6 +13,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { prisma } from '@/lib/prisma'
 import { formatDateRange, sitDuration, PET_ICONS, PET_LABELS } from '@/lib/utils'
 import { ApplicationPanel } from '@/components/listings/application-panel'
+import ReviewList from '@/components/ReviewList'
 
 async function getListing(id: string) {
   try {
@@ -339,34 +340,13 @@ export default async function ListingDetailPage({ params }: { params: { id: stri
                 <h2 className="font-display text-xl font-bold text-haven-navy mb-4">
                   Reviews for {listing.owner.firstName}
                 </h2>
-                {listing.reviews.map((review) => (
-                  <div key={review.id} className="card-flat rounded-2xl border border-haven-sand/40 p-5 mb-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Avatar
-                        src={review.reviewer.avatar ?? undefined}
-                        firstName={review.reviewer.firstName}
-                        lastName={review.reviewer.lastName}
-                        size="sm"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-haven-navy">
-                          {review.reviewer.firstName} {review.reviewer.lastName}
-                        </p>
-                        <div className="flex items-center gap-1">
-                          {[1,2,3,4,5].map((i) => (
-                            <Star key={i} className={`h-3.5 w-3.5 ${i <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-haven-sand'}`} />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="ml-auto text-xs text-haven-gray">
-                        {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                      </span>
-                    </div>
-                    {review.comment && (
-                      <p className="text-sm text-haven-navy">"{review.comment}"</p>
-                    )}
-                  </div>
-                ))}
+                <ReviewList
+                  reviews={listing.reviews.map((r) => ({
+                    ...r,
+                    createdAt: r.createdAt.toISOString(),
+                    listing: { city: listing.city, state: listing.state ?? null },
+                  }))}
+                />
               </div>
             )}
           </div>

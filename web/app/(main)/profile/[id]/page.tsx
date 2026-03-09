@@ -12,6 +12,7 @@ import { Badge, VerifiedChip, MatchScore } from '@/components/ui/badge'
 import { ListingCard } from '@/components/listings/listing-card'
 import { PET_ICONS, PET_LABELS, formatDateRange } from '@/lib/utils'
 import { prisma } from '@/lib/prisma'
+import ReviewList from '@/components/ReviewList'
 
 async function getProfile(id: string) {
   try {
@@ -302,53 +303,14 @@ export default async function ProfilePage({ params }: { params: { id: string } }
 
         {/* Reviews */}
         {profile.reviewsReceived && profile.reviewsReceived.length > 0 && (
-          <div className="card p-5 mb-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-lg font-bold text-haven-navy">Reviews</h2>
-              {profile.averageRating && (
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-bold text-haven-navy">{profile.averageRating.toFixed(2)}</span>
-                  <span className="text-xs text-haven-gray">({profile.totalReviews})</span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-4">
-              {profile.reviewsReceived.map((review) => (
-                <div key={review.id} className="border-b border-haven-sand/30 last:border-0 pb-4 last:pb-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Avatar
-                      src={review.reviewer.avatar ?? undefined}
-                      firstName={review.reviewer.firstName}
-                      lastName={review.reviewer.lastName}
-                      size="sm"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-haven-navy">
-                        {review.reviewer.firstName} {review.reviewer.lastName}
-                      </p>
-                      {review.listing && (
-                        <p className="text-xs text-haven-gray">
-                          {review.listing.city}{review.listing.state ? `, ${review.listing.state}` : ''}
-                        </p>
-                      )}
-                    </div>
-                    <div className="ml-auto flex items-center gap-0.5">
-                      {[1,2,3,4,5].map((i) => (
-                        <Star key={i} className={`h-3.5 w-3.5 ${i <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-haven-sand'}`} />
-                      ))}
-                    </div>
-                  </div>
-                  {review.comment && (
-                    <p className="text-sm text-haven-gray leading-relaxed">{review.comment}</p>
-                  )}
-                  <p className="text-xs text-haven-gray-light mt-2">
-                    {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ReviewList
+            reviews={profile.reviewsReceived.map((r) => ({
+              ...r,
+              createdAt: r.createdAt.toISOString(),
+            }))}
+            averageRating={profile.averageRating}
+            totalReviews={profile.totalReviews}
+          />
         )}
 
       </div>
