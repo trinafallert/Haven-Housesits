@@ -3,6 +3,8 @@ import './globals.css'
 import { Providers } from './providers'
 
 // Use system fonts (no Google Fonts network request required during build)
+
+export const metadataBase = new URL('https://havenhousesits.com')
 const interVariable  = '--font-inter'
 const playfairVariable = '--font-playfair'
 

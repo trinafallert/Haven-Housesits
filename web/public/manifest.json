@@ -1,0 +1,13 @@
+{
+  "name": "Haven Housesits",
+  "short_name": "Haven",
+  "description": "Find trusted house sitters worldwide",
+  "start_url": "/haven",
+  "display": "standalone",
+  "background_color": "#F5F0E8",
+  "theme_color": "#5BA4A4",
+  "icons": [
+    { "src": "/haven/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/haven/favicon.ico", "sizes": "32x32", "type": "image/png" }
+  ]
+}
