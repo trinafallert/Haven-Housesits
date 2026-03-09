@@ -81,9 +81,6 @@ enum VerificationStatus {
 
 enum AddonType {
   DEEP_CLEAN          // Deep clean before owner returns
-  PROFESSIONAL_PHOTOS // Pet/home photography
-  GROCERY_STOCK       // Stock groceries before arrival
-  PLANT_CARE          // Plant watering & care
   MAIL_COLLECTION     // Mail & package collection
   KEY_HANDOFF         // Meet sitter for key handoff
   AIRPORT_PICKUP      // Pickup owner from airport on return

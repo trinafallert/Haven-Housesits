@@ -11,10 +11,7 @@ import { formatDateRange, sitDuration, formatCurrency } from '@/lib/utils'
 import { toast } from '@/hooks/use-toast'
 
 const ADDONS = [
-  { id: 'deep_clean',   icon: '🧹', title: 'Deep Clean',        desc: 'Professional clean before you return', price: 120 },
-  { id: 'grocery',      icon: '🛒', title: 'Grocery Stock',      desc: 'Fridge stocked on your arrival back',  price: 60  },
-  { id: 'pet_photos',   icon: '📸', title: 'Pet Photo Package',  desc: 'Gallery of pet photos during sit',     price: 45  },
-  { id: 'plant_care',   icon: '🪴', title: 'Plant Care',         desc: 'Dedicated plant watering & care',      price: 25  },
+  { id: 'deep_clean', icon: '🧹', title: 'Deep Clean', desc: 'Professional clean before you return', price: 120 },
 ]
 
 export function ApplicationPanel({ listing }: { listing: ListingData }) {

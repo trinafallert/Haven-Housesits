@@ -65,7 +65,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What are add-ons?',
-        a: "Add-ons are optional paid services sitters can offer: deep clean before you return ($120), grocery stocking ($60), professional pet photo package ($45), or plant care ($25). Haven takes 15% of add-on fees; the rest goes to the sitter.",
+        a: "Add-ons are optional paid services sitters can offer: a professional deep clean before you return ($120). Haven takes 15% of add-on fees; the rest goes to the sitter.",
       },
       {
         q: 'Can I request a video call before confirming?',

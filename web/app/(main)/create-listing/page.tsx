@@ -60,10 +60,7 @@ const AMENITIES = [
 ]
 
 const ADDONS = [
-  { key: 'DEEP_CLEAN',    label: 'Deep clean before return',    price: 120 },
-  { key: 'GROCERY_STOCK', label: 'Grocery stocking',            price: 60 },
-  { key: 'PET_PHOTOS',    label: 'Professional pet photo package', price: 45 },
-  { key: 'PLANT_CARE',    label: 'Plant care & watering',       price: 25 },
+  { key: 'DEEP_CLEAN', label: 'Deep clean before return', price: 120 },
 ]
 
 interface Pet {

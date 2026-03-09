@@ -67,7 +67,7 @@ const whyHaven = [
   {
     icon: <Gift className="h-6 w-6" />,
     title: 'Premium add-ons',
-    desc: 'Deep clean before you return, grocery stocking, welcome baskets and more.',
+    desc: 'Add a professional deep clean before you return — come home to a spotless house.',
   },
   {
     icon: <Heart className="h-6 w-6" />,
@@ -93,9 +93,6 @@ const whyHaven = [
 
 const addons = [
   { icon: '🧹', title: 'Deep Clean', desc: 'Come home to a spotless house — sitter arranges a professional clean before you return.' },
-  { icon: '🛒', title: 'Grocery Stock', desc: 'Arrive to a stocked fridge. The sitter picks up your essentials before you land.' },
-  { icon: '📸', title: 'Pet Photos Package', desc: 'Receive a gallery of adorable photos of your pets during the sit.' },
-  { icon: '💐', title: 'Plant Care', desc: 'Keep your green friends happy with dedicated plant watering and care.' },
 ]
 
 const testimonials = [
@@ -144,7 +141,7 @@ const faqs = [
   },
   {
     q: 'What are add-ons?',
-    a: 'Add-ons are optional premium services owners can purchase for a sit — like a professional deep clean before they return, grocery stocking, or a pet photo package.',
+    a: 'Add-ons are optional premium services owners can purchase for a sit — like a professional deep clean before they return. Haven takes 15% of add-on fees; the rest goes to the sitter.',
   },
   {
     q: 'How does the Sit Match Score work?',
