@@ -9,6 +9,7 @@ const handler = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt' },
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,  // ← allows any host (tunnels, proxies, custom domains)
 
   providers: [
     GoogleProvider({
