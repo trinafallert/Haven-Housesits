@@ -43,6 +43,9 @@ export function Navbar() {
             <Link href="/paid-sits" className="text-sm font-medium text-haven-gray hover:text-haven-teal transition-colors">
               Paid Sits
             </Link>
+            <Link href="/blog" className="text-sm font-medium text-haven-gray hover:text-haven-teal transition-colors">
+              Blog
+            </Link>
           </nav>
 
           {/* Desktop right */}
@@ -128,6 +131,7 @@ export function Navbar() {
             <MobileLink href="/how-it-works"  onClick={() => setMobileOpen(false)}>How it Works</MobileLink>
             <MobileLink href="/pricing"       onClick={() => setMobileOpen(false)}>Pricing</MobileLink>
             <MobileLink href="/paid-sits"     onClick={() => setMobileOpen(false)}>Paid Sits</MobileLink>
+            <MobileLink href="/blog"          onClick={() => setMobileOpen(false)}>Blog</MobileLink>
             {isLoggedIn ? (
               <>
                 <MobileLink href="/dashboard" onClick={() => setMobileOpen(false)}>My Sits</MobileLink>
