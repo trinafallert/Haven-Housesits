@@ -41,17 +41,15 @@ function OptionBtn({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex items-center justify-between px-5 py-4 rounded-2xl border-2 font-medium transition-all duration-150 text-left',
+        'flex flex-col items-center justify-center gap-1.5 px-3 py-3.5 rounded-2xl border-2 font-medium transition-all duration-150 text-center w-full min-h-[72px]',
         selected
           ? 'border-haven-teal-dark bg-haven-teal-pale text-haven-teal-dark'
           : 'border-haven-sand text-haven-navy hover:border-haven-teal/60'
       )}
     >
-      <span className="flex items-center gap-3">
-        {icon && <span className="text-xl">{icon}</span>}
-        {label}
-      </span>
-      {selected && <Check className="h-5 w-5 text-haven-teal-dark flex-shrink-0" />}
+      {icon && <span className="text-2xl">{icon}</span>}
+      <span className="text-sm leading-tight">{label}</span>
+      {selected && <Check className="h-4 w-4 text-haven-teal-dark" />}
     </button>
   )
 }
@@ -158,7 +156,8 @@ export default function OnboardingPage() {
     walkDuration:        null,
   })
 
-  const firstName = session?.user?.name?.split(' ')[0] || 'there'
+  const firstName = session?.user?.name?.split(' ')[0] ?? (session?.user as any)?.firstName ?? ''
+  const displayName = firstName || 'there'
 
   function toggleArray(arr: string[], val: string): string[] {
     return arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val]
@@ -170,14 +169,14 @@ export default function OnboardingPage() {
   async function finish() {
     setSubmitting(true)
     try {
-      await fetch('/api/profile/onboarding', {
+      await fetch('/haven/api/profile/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
-      router.push('/dashboard?welcome=true')
+      router.push('/search')
     } catch {
-      router.push('/dashboard')
+      router.push('/search')
     }
   }
 
@@ -216,7 +215,7 @@ export default function OnboardingPage() {
                 <div className="text-center py-8">
                   <div className="text-7xl mb-6">🏡</div>
                   <h1 className="font-display text-4xl font-bold text-haven-navy mb-4">
-                    Welcome to Haven, {firstName}!
+                    Welcome to Haven, {displayName}!
                   </h1>
                   <p className="text-haven-gray text-lg leading-relaxed mb-8">
                     Let's set up your profile so we can match you with the perfect sits.
@@ -260,7 +259,7 @@ export default function OnboardingPage() {
                     Which animals do you want to sit for?
                   </h2>
                   <p className="text-haven-gray mb-6">Pick all the pets you're happy to care for.</p>
-                  <div className="space-y-2.5">
+                  <div className="grid grid-cols-3 gap-2.5">
                     {PET_OPTIONS.map((p) => (
                       <OptionBtn
                         key={p.value}
@@ -284,7 +283,7 @@ export default function OnboardingPage() {
                     Select the skills that best match your experience. These help owners feel confident in your abilities.{' '}
                     <span className="font-semibold text-haven-navy cursor-pointer">Read more</span>
                   </div>
-                  <div className="space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
                     {SKILL_OPTIONS.map((skill) => (
                       <OptionBtn
                         key={skill}
@@ -304,7 +303,7 @@ export default function OnboardingPage() {
                   </h2>
                   <div className="mb-6">
                     <p className="font-semibold text-haven-navy mb-3">What size dogs are you happy to sit for?</p>
-                    <div className="space-y-2.5">
+                    <div className="grid grid-cols-3 gap-2.5">
                       {DOG_SIZES.map((s) => (
                         <OptionBtn
                           key={s.value}
@@ -349,7 +348,7 @@ export default function OnboardingPage() {
                   </div>
                   <div className="mb-6 border-t border-haven-sand/40 pt-6">
                     <p className="font-semibold text-haven-navy mb-3">What kind of places do you love?</p>
-                    <div className="space-y-2.5">
+                    <div className="grid grid-cols-3 gap-2.5">
                       {PLACE_TYPES.map((p) => (
                         <OptionBtn
                           key={p.value}
@@ -464,7 +463,7 @@ export default function OnboardingPage() {
                 <div className="text-center py-8">
                   <div className="text-7xl mb-6">🎉</div>
                   <h2 className="font-display text-4xl font-bold text-haven-navy mb-4">
-                    You're all set, {firstName}!
+                    You're all set, {displayName}!
                   </h2>
                   <p className="text-haven-gray text-lg mb-8">
                     Your Haven profile is ready. Start browsing sits or complete your

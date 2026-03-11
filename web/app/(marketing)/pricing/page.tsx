@@ -16,7 +16,7 @@ const plans = [
   {
     id: 'explorer',
     name: 'Explorer',
-    tagline: 'See if Haven is right for you',
+    tagline: 'Dip your toes in — browse and apply, no commitment',
     monthlyPrice: 0,
     annualPrice: 0,
     badge: null,
@@ -39,7 +39,7 @@ const plans = [
   {
     id: 'standard',
     name: 'Standard',
-    tagline: 'For sitters and owners who are serious',
+    tagline: 'Unlimited sits, real coverage — the full Haven experience',
     monthlyPrice: 9,
     annualPrice: 79,
     badge: 'Most popular',
@@ -62,7 +62,7 @@ const plans = [
   {
     id: 'premium',
     name: 'Premium',
-    tagline: 'Every feature, maximum protection',
+    tagline: 'Maximum protection, priority support, and every perk we offer',
     monthlyPrice: 14,
     annualPrice: 129,
     badge: 'Best value',
@@ -406,7 +406,7 @@ export default function PricingPage() {
           </h2>
           <p className="text-haven-gray mb-8 max-w-md mx-auto">
             No credit card. No commitment. 3 months free on any paid plan.
-            A growing community of sitters and owners worldwide.
+            A global community growing daily.
           </p>
           <Link href="/signup">
             <Button size="xl" rightIcon={<ArrowRight className="h-5 w-5" />}>

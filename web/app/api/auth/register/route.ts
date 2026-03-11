@@ -19,7 +19,7 @@ function isStudentEmail(email: string): boolean {
 
 export async function POST(req: NextRequest) {
   // Rate limit: 5 registrations per IP per hour
-  const limited = await withRateLimit(req, 5, 60 * 60 * 1000)
+  const limited = await withRateLimit(req, 20, 60 * 60 * 1000)
   if (limited) return limited
 
   let body: unknown

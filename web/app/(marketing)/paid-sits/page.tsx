@@ -9,16 +9,16 @@ export const metadata: Metadata = {
 
 const PAID_PERKS = [
   { icon: '🌍', title: 'Browse anywhere', desc: 'Search paid sits in any city, country, or continent — not limited to your local area like Rover or Wag.' },
-  { icon: '💸', title: 'Real earning potential', desc: 'Paid sitters earn $30–$100/night depending on location and pet complexity. Full-time travel funding is possible.' },
+  { icon: '💸', title: 'Real earning potential', desc: 'Paid sitters set their own rates with owners. Compensation varies by location, pet complexity, and duration — full-time travel funding is possible.' },
   { icon: '🔒', title: 'Secure escrow payments', desc: 'Haven holds payment in escrow until the sit is confirmed. No chasing owners for money.' },
   { icon: '⭐', title: 'Build your reputation', desc: 'Every paid sit builds your review score. Top-rated sitters get premium listings first.' },
 ]
 
 const STATS = [
-  { value: 'Global', label: 'Paid sits available worldwide' },
-  { value: '$30–100', label: 'Typical nightly rate range' },
-  { value: '8%', label: 'Platform fee (sitters keep the rest)' },
-  { value: '24hr', label: 'Payout after sit completes' },
+  { value: 'Global',  label: 'Paid sits listed worldwide' },
+  { value: 'You set', label: 'Your own daily rate' },
+  { value: '8%',      label: 'Platform fee (we keep)' },
+  { value: '4.9★',    label: 'Average sitter rating' },
 ]
 
 const HOW_IT_WORKS = [
@@ -145,22 +145,22 @@ export default function PaidSitsPage() {
           </div>
           <div className="bg-haven-navy rounded-3xl p-10 text-white text-center">
             <DollarSign className="h-12 w-12 text-haven-teal mx-auto mb-4" />
-            <h3 className="font-display text-3xl font-bold mb-2">$52 avg/night</h3>
-            <p className="text-white/60 mb-8">Based on current listings worldwide</p>
+            <h3 className="font-display text-3xl font-bold mb-2">You set the rate</h3>
+            <p className="text-white/60 mb-8">Owners post what they're willing to pay. You decide if it works for you.</p>
             <div className="space-y-3 text-left">
               {[
-                { location: '🇦🇺 Sydney, Australia', rate: '$45–70/night' },
-                { location: '🇺🇸 New York, USA',     rate: '$55–90/night' },
-                { location: '🇬🇧 London, UK',        rate: '£40–65/night' },
-                { location: '🇨🇦 Vancouver, Canada', rate: '$35–55/night' },
-                { location: '🇮🇩 Bali, Indonesia',   rate: '$20–35/night' },
+                { label: 'Sit rate (owner sets)',  value: 'Your rate' },
+                { label: 'Haven fee (8%)',          value: '−8%' },
+                { label: 'You receive',             value: '92%' },
+                { label: 'Tips (100% yours)',        value: '+ tip' },
               ].map((r) => (
-                <div key={r.location} className="flex justify-between items-center py-2 border-b border-white/10 last:border-0">
-                  <span className="text-sm text-white/80">{r.location}</span>
-                  <span className="text-sm font-semibold text-haven-teal-light">{r.rate}</span>
+                <div key={r.label} className="flex justify-between items-center py-2 border-b border-white/10 last:border-0">
+                  <span className="text-sm text-white/80">{r.label}</span>
+                  <span className="text-sm font-semibold text-haven-teal-light">{r.value}</span>
                 </div>
               ))}
             </div>
+            <p className="text-xs text-white/40 mt-6">Example: $500 sit → you receive $460 + any tip</p>
           </div>
         </div>
       </section>
@@ -169,7 +169,7 @@ export default function PaidSitsPage() {
       <section className="py-20 bg-white">
         <div className="container-haven text-center">
           <h2 className="section-title mb-4">Ready to get paid to travel?</h2>
-          <p className="text-haven-gray mb-8 max-w-xl mx-auto">A global community of sitters earning while exploring the world — and growing daily.</p>
+          <p className="text-haven-gray mb-8 max-w-xl mx-auto">A global community of sitters and owners growing daily. Create your free profile and start applying.</p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
               href="/haven/search?type=PAID"

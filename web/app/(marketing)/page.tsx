@@ -11,10 +11,10 @@ import {
 // ─── Static data for the landing page ────────────────────────────────────────
 
 const stats = [
-  { value: 'Global', label: 'Sits worldwide & growing' },
-  { value: '4.9★',   label: 'Average member rating' },
-  { value: '3 mo',   label: 'Free to start' },
-  { value: '24/7',   label: 'Real human support' },
+  { value: '4.9★',   label: 'Average rating' },
+  { value: '120+',   label: 'Countries' },
+  { value: '24/7',   label: 'Live support' },
+  { value: '$0',     label: 'To get started' },
 ]
 
 const sitTypes = [

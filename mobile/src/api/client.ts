@@ -8,7 +8,7 @@ import * as SecureStore from 'expo-secure-store'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const BASE_URL = 'https://3.219.64.247/haven/api'
+const BASE_URL = 'https://indices-liability-interim-threshold.trycloudflare.com/haven/api'
 const TOKEN_KEY = 'haven_auth_token'
 const USER_KEY  = 'haven_auth_user'
 

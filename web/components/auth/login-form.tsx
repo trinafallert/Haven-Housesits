@@ -33,19 +33,19 @@ export function LoginForm() {
       email:    data.email,
       password: data.password,
       redirect: false,
-      callbackUrl: '/haven/dashboard',
+      callbackUrl: '/dashboard',
     })
     setLoading(false)
 
     if (result?.error) {
       toast({ title: 'Sign in failed', description: 'Check your email and password.', variant: 'error' })
     } else {
-      router.push('/haven/dashboard')
+      router.push('/dashboard')
     }
   }
 
   async function handleGoogle() {
-    await signIn('google', { callbackUrl: '/haven/dashboard' })
+    await signIn('google', { callbackUrl: '/dashboard' })
   }
 
   return (

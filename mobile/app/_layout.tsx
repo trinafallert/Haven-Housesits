@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Stack, Redirect } from 'expo-router'
+import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { Platform, View, ActivityIndicator } from 'react-native'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import * as SplashScreen from 'expo-splash-screen'
 import { useAuthStore, initAuth } from '../src/store/auth'
 import { Colors } from '../constants/colors'
+
+// Keep splash visible while we initialise
+SplashScreen.preventAutoHideAsync().catch(() => {})
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,11 +44,10 @@ function RootNavigator() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn)
 
   useEffect(() => {
-    initAuth().finally(() => setReady(true))
-    if (Platform.OS !== 'web') {
-      const { default: SplashScreen } = require('expo-splash-screen')
+    initAuth().finally(() => {
+      setReady(true)
       SplashScreen.hideAsync().catch(() => {})
-    }
+    })
   }, [])
 
   if (!ready) {

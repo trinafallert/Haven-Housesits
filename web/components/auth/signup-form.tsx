@@ -75,7 +75,7 @@ export function SignupForm() {
         // Registration succeeded but auto-login failed — send them to login page
         router.push('/haven/login?registered=1')
       } else {
-        router.push('/haven/onboarding')
+        router.push('/onboarding')
       }
     } catch {
       toast({ title: 'Something went wrong', description: 'Please try again.', variant: 'error' })

@@ -17,11 +17,11 @@ const { width } = Dimensions.get('window')
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TOP_TABS = [
-  { key: 'ALL',        label: 'All' },
-  { key: 'FREE_SITS',  label: 'Free Sits 🏡' },
-  { key: 'PAID',       label: 'Paid 💰' },
-  { key: 'VACANT',     label: 'Vacant Homes' },
-  { key: 'LONG_TERM',  label: 'Long-term' },
+  { key: 'ALL',       label: 'All' },
+  { key: 'FREE',      label: 'Free Sits' },
+  { key: 'PAID',      label: 'Paid 💰' },
+  { key: 'VACANT',    label: 'Vacant Homes' },
+  { key: 'LONG_TERM', label: 'Long-term' },
 ]
 
 const DURATION_OPTIONS = [
@@ -509,11 +509,9 @@ export default function SearchScreen() {
   const { data: notifData } = useNotifications()
   const unreadCount = (notifData?.notifications ?? []).filter((n: any) => !n.isRead).length
 
-  // Only pass sitType=PAID/LONG_TERM to API; handle other tab filters client-side
+  // Only pass sitType=PAID to API; handle other tab filters client-side
   const sitTypeParam =
-    activeTab === 'PAID'      ? 'PAID' :
-    activeTab === 'LONG_TERM' ? 'LONG_TERM' :
-    undefined
+    activeTab === 'PAID' ? 'PAID' : undefined
 
   const petTypeParam = filters.selectedPets.length === 1 ? filters.selectedPets[0] : undefined
 
@@ -534,8 +532,9 @@ export default function SearchScreen() {
     let result = [...allListings]
 
     // Tab filters handled client-side
-    if (activeTab === 'FREE_SITS') result = result.filter(l => l.sitType !== 'PAID')
+    if (activeTab === 'FREE')      result = result.filter(l => l.sitType !== 'PAID')
     if (activeTab === 'VACANT')    result = result.filter(l => (l.pets ?? []).length === 0 && l.sitType !== 'PAID')
+    if (activeTab === 'LONG_TERM') result = result.filter(l => getDurationDays(l) > 28)
 
     // Multiple pet type filters (when more than 1 selected)
     if (filters.selectedPets.length > 1) {

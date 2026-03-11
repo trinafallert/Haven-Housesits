@@ -1,117 +1,158 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Clock } from 'lucide-react'
-import { allPosts, formatDate, categoryStyle, type PostCategory } from '@/lib/blog'
-import { Badge } from '@/components/ui/badge'
+import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Blog — Haven Housesits',
-  description:
-    'Practical guides, tips, and advice for house sitters and homeowners. Learn how to get your first housesit, find paid sits, and make every stay a great one.',
+  title: 'Blog | Haven Housesits',
+  description: 'Tips, stories, and guides for house sitters and pet owners.',
 }
 
-const featuredPost = allPosts[allPosts.length - 1]
-const otherPosts   = allPosts.slice(0, allPosts.length - 1).reverse()
+const posts = [
+  {
+    slug: 'how-house-sitting-works',
+    title: 'How House Sitting Works: A Complete Guide for Beginners',
+    excerpt: 'Everything you need to know about house sitting — from finding your first sit to building a five-star reputation.',
+    category: 'Getting Started',
+    date: 'March 5, 2026',
+    readTime: '6 min read',
+    emoji: '🏠',
+  },
+  {
+    slug: 'tips-for-pet-owners',
+    title: '8 Tips for Pet Owners Using House Sitters for the First Time',
+    excerpt: 'Leaving your pets with someone new can feel daunting. Here\'s how to find the right sitter and set everyone up for success.',
+    category: 'Pet Owners',
+    date: 'March 3, 2026',
+    readTime: '5 min read',
+    emoji: '🐾',
+  },
+  {
+    slug: 'paid-vs-free-sits',
+    title: 'Paid Sits vs. Free Sits: Which Is Right for You?',
+    excerpt: 'Haven offers both free and paid house sitting opportunities. We break down the pros, cons, and when each makes sense.',
+    category: 'Sitters',
+    date: 'February 28, 2026',
+    readTime: '4 min read',
+    emoji: '💰',
+  },
+  {
+    slug: 'build-a-great-sitter-profile',
+    title: 'How to Build a Sitter Profile That Gets Accepted',
+    excerpt: 'Your profile is your first impression. Learn what pet owners actually look for when choosing a house sitter.',
+    category: 'Sitters',
+    date: 'February 24, 2026',
+    readTime: '5 min read',
+    emoji: '⭐',
+  },
+  {
+    slug: 'house-sitting-packing-list',
+    title: 'The Ultimate House Sitting Packing List',
+    excerpt: 'From emergency vet numbers to pet food storage — everything you should bring (and ask about) before your sit begins.',
+    category: 'Tips & Tricks',
+    date: 'February 20, 2026',
+    readTime: '4 min read',
+    emoji: '🎒',
+  },
+  {
+    slug: 'haven-vs-trustedhousesitters',
+    title: 'Haven vs. TrustedHouseSitters: What\'s Different?',
+    excerpt: 'We\'re a new kind of house sitting platform. Here\'s what makes Haven unique — and why sitters and owners are making the switch.',
+    category: 'About Haven',
+    date: 'February 15, 2026',
+    readTime: '3 min read',
+    emoji: '🌿',
+  },
+]
 
-function CategoryPill({ category }: { category: PostCategory }) {
+const categories = ['All', 'Getting Started', 'Pet Owners', 'Sitters', 'Tips & Tricks', 'About Haven']
+
+export default function BlogPage() {
   return (
-    <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${categoryStyle[category]}`}>
-      {category}
-    </span>
-  )
-}
-
-export default function BlogIndexPage() {
-  return (
-    <div className="bg-haven-cream min-h-screen">
-
-      {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section className="py-20 container-haven text-center">
-        <Badge variant="teal" className="mb-6">Haven Blog</Badge>
-        <h1 className="font-display text-5xl md:text-6xl font-bold text-haven-navy mb-4">
-          Guides for sitters &amp; owners
-        </h1>
-        <p className="text-haven-gray text-xl max-w-2xl mx-auto">
-          Practical advice on landing sits, earning from housesitting, and being the sitter that owners request again and again.
-        </p>
+    <main className="min-h-screen bg-haven-cream">
+      {/* Hero */}
+      <section className="bg-haven-navy py-20 px-6 text-center">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-haven-teal font-semibold mb-3 tracking-wide uppercase text-sm">Haven Blog</p>
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-white mb-4">
+            Tips, stories & guides
+          </h1>
+          <p className="text-white/70 text-lg">
+            Everything you need to house sit smarter, find better sitters, and travel with peace of mind.
+          </p>
+        </div>
       </section>
 
-      {/* ── FEATURED POST ──────────────────────────────────────────── */}
-      <section className="container-haven pb-12">
-        <Link
-          href={`/blog/${featuredPost.slug}`}
-          className="group block bg-white rounded-3xl border border-haven-sand/60 shadow-card hover:shadow-card-hover transition-all duration-200 overflow-hidden max-w-4xl mx-auto"
-        >
-          <div className="p-10 md:p-12">
-            <div className="flex items-center gap-3 mb-5">
-              <span className="text-xs font-semibold text-haven-teal-dark uppercase tracking-wide">Featured</span>
-              <span className="text-haven-sand-dark">·</span>
-              <CategoryPill category={featuredPost.category} />
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-haven-navy mb-4 group-hover:text-haven-teal transition-colors">
-              {featuredPost.title}
-            </h2>
-            <p className="text-haven-gray leading-relaxed mb-6 max-w-2xl">
-              {featuredPost.description}
-            </p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm text-haven-gray-light">
-                <span>{featuredPost.author.name}</span>
-                <span>·</span>
-                <span>{formatDate(featuredPost.publishedAt)}</span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
-                  {featuredPost.readingTime} min read
-                </span>
-              </div>
-              <span className="flex items-center gap-1 text-haven-teal font-semibold text-sm group-hover:gap-2 transition-all">
-                Read <ArrowRight className="h-4 w-4" />
-              </span>
-            </div>
-          </div>
-        </Link>
-      </section>
-
-      {/* ── POSTS GRID ─────────────────────────────────────────────── */}
-      <section className="container-haven pb-24">
-        <h2 className="font-display text-2xl font-bold text-haven-navy mb-8 max-w-4xl mx-auto">
-          All posts
-        </h2>
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {otherPosts.map((post) => (
-            <Link
-              key={post.slug}
-              href={`/blog/${post.slug}`}
-              className="group block bg-white rounded-3xl border border-haven-sand/60 shadow-card hover:shadow-card-hover transition-all duration-200 p-8"
+      {/* Category Filter */}
+      <section className="border-b border-haven-sand bg-white sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
+          {categories.map((cat) => (
+            <span
+              key={cat}
+              className={`whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-colors
+                ${cat === 'All'
+                  ? 'bg-haven-teal text-white'
+                  : 'bg-haven-sand/50 text-haven-navy hover:bg-haven-teal/10'
+                }`}
             >
-              <div className="mb-4">
-                <CategoryPill category={post.category} />
-              </div>
-              <h3 className="font-display text-xl font-bold text-haven-navy mb-3 group-hover:text-haven-teal transition-colors leading-snug">
-                {post.title}
-              </h3>
-              <p className="text-haven-gray text-sm leading-relaxed mb-6 line-clamp-3">
-                {post.description}
-              </p>
-              <div className="flex items-center justify-between text-xs text-haven-gray-light">
-                <div className="flex items-center gap-3">
-                  <span>{formatDate(post.publishedAt)}</span>
-                  <span>·</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {post.readingTime} min
-                  </span>
+              {cat}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* Posts Grid */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {posts.map((post) => (
+            <Link key={post.slug} href={`/blog/${post.slug}`} className="group">
+              <article className="bg-white rounded-2xl overflow-hidden border border-haven-sand hover:shadow-lg transition-all duration-200 hover:-translate-y-1 h-full flex flex-col">
+                {/* Emoji banner */}
+                <div className="bg-haven-teal/10 h-44 flex items-center justify-center text-7xl">
+                  {post.emoji}
                 </div>
-                <span className="flex items-center gap-1 text-haven-teal font-semibold group-hover:gap-2 transition-all">
-                  Read <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </div>
+                <div className="p-6 flex flex-col flex-1">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs font-semibold text-haven-teal uppercase tracking-wide bg-haven-teal/10 px-2 py-1 rounded-full">
+                      {post.category}
+                    </span>
+                    <span className="text-xs text-haven-gray">{post.readTime}</span>
+                  </div>
+                  <h2 className="font-display text-xl font-bold text-haven-navy mb-2 group-hover:text-haven-teal transition-colors leading-snug">
+                    {post.title}
+                  </h2>
+                  <p className="text-haven-gray text-sm leading-relaxed flex-1">
+                    {post.excerpt}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-xs text-haven-gray">{post.date}</span>
+                    <span className="text-haven-teal text-sm font-semibold group-hover:underline">Read more →</span>
+                  </div>
+                </div>
+              </article>
             </Link>
           ))}
         </div>
       </section>
 
-    </div>
+      {/* Newsletter CTA */}
+      <section className="bg-haven-navy py-16 px-6">
+        <div className="max-w-xl mx-auto text-center">
+          <h2 className="font-display text-3xl font-bold text-white mb-3">Stay in the loop 🌿</h2>
+          <p className="text-white/70 mb-8">Get new articles, sit tips, and Haven updates delivered to your inbox.</p>
+          <form className="flex gap-3 max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="your@email.com"
+              className="flex-1 px-4 py-3 rounded-xl text-haven-navy font-medium focus:outline-none focus:ring-2 focus:ring-haven-teal"
+            />
+            <button
+              type="submit"
+              className="bg-haven-teal text-white px-6 py-3 rounded-xl font-semibold hover:bg-haven-teal-dark transition-colors whitespace-nowrap"
+            >
+              Subscribe
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
   )
 }

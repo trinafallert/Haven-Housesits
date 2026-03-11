@@ -43,10 +43,10 @@ export default function AboutPage() {
         <div className="container-haven">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: 'Global', label: 'Sits worldwide & growing' },
-              { value: '4.9★',   label: 'Average member rating' },
-              { value: '3 mo',   label: 'Free to start' },
-              { value: '24/7',   label: 'Real human support' },
+              { value: 'Global',  label: 'Sitters worldwide' },
+              { value: '120+',    label: 'Countries' },
+              { value: '4.9★',    label: 'Average rating' },
+              { value: '$0',      label: 'To get started' },
             ].map((s) => (
               <div key={s.label}>
                 <div className="font-display text-3xl font-bold text-haven-teal-light">{s.value}</div>
@@ -126,7 +126,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section className="py-20 container-haven text-center">
         <h2 className="section-title mb-4">Join the Haven community</h2>
-        <p className="text-haven-gray mb-8 max-w-xl mx-auto">Free to join. Start browsing sits today.</p>
+        <p className="text-haven-gray mb-8 max-w-xl mx-auto">Free to join. A global community growing daily.</p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link
             href="/haven/signup"
