@@ -19,7 +19,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'I currently use TrustedHousesitters / Rover. Can I switch?',
-        a: "We offer a switcher credit — 3 free months of Premium if you show proof of an active subscription on another platform (screenshot of your billing page). Contact support@havenhousesits.com to claim it.",
+        a: "We offer a switcher credit — 3 free months of Premium if you show proof of an active subscription on another platform (screenshot of your billing page). Contact support@havensits.com to claim it.",
       },
     ],
   },
@@ -141,7 +141,7 @@ export default function FAQPage() {
             <p className="text-white/80 mb-4 text-sm">Our support team replies in under 4 minutes, 24 hours a day.</p>
             <div className="flex gap-3 justify-center">
               <Button variant="white">Chat now</Button>
-              <Link href="mailto:support@havenhousesits.com">
+              <Link href="mailto:support@havensits.com">
                 <Button variant="white">Email us</Button>
               </Link>
             </div>

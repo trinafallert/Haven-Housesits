@@ -512,7 +512,7 @@ export default function HomePage() {
                     </div>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={`/haven${screen.src}`}
+                      src={screen.src}
                       alt={screen.label}
                       className="w-full block"
                     />

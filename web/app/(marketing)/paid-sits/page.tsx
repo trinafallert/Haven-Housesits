@@ -50,13 +50,13 @@ export default function PaidSitsPage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <Link
-                href="/haven/search?type=PAID"
+                href="/search?type=PAID"
                 className="inline-flex items-center gap-2 bg-haven-teal hover:bg-haven-teal-dark text-white font-bold px-8 py-4 rounded-2xl text-base transition-colors shadow-haven"
               >
                 Browse paid sits <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
-                href="/haven/signup"
+                href="/signup"
                 className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-2xl text-base transition-colors border border-white/20"
               >
                 Create free profile
@@ -172,13 +172,13 @@ export default function PaidSitsPage() {
           <p className="text-haven-gray mb-8 max-w-xl mx-auto">A global community of sitters and owners growing daily. Create your free profile and start applying.</p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link
-              href="/haven/search?type=PAID"
+              href="/search?type=PAID"
               className="inline-flex items-center gap-2 bg-haven-teal hover:bg-haven-teal-dark text-white font-bold px-8 py-4 rounded-2xl text-base transition-colors"
             >
               Browse paid sits <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
-              href="/haven/pricing"
+              href="/pricing"
               className="inline-flex items-center gap-2 border-2 border-haven-teal text-haven-teal-dark hover:bg-haven-teal-pale font-semibold px-8 py-4 rounded-2xl text-base transition-colors"
             >
               View membership plans

@@ -101,10 +101,12 @@ export default function WelcomeScreen() {
       />
 
       {/* ── Fixed overlay ── */}
-      <View style={[StyleSheet.absoluteFill, styles.overlay]}>
+      {/* box-none throughout so swipes reach the FlatList underneath; only the
+          actual buttons below claim touches. */}
+      <View style={[StyleSheet.absoluteFill, styles.overlay]} pointerEvents="box-none">
 
         {/* Logo + Skip */}
-        <View style={styles.topBar}>
+        <View style={styles.topBar} pointerEvents="box-none">
           <View style={styles.logoWrap}>
             <Text style={styles.logoText}>haven</Text>
             <View style={styles.logoDot} />
@@ -115,29 +117,32 @@ export default function WelcomeScreen() {
         </View>
 
         {/* Spacer pushes content down */}
-        <View style={{ flex: 1 }} />
+        <View style={{ flex: 1 }} pointerEvents="none" />
 
         {/* Slide content */}
-        <View style={styles.content}>
-          <Text style={styles.tag}>{SLIDES[activeIndex].tag}</Text>
-          <Text style={styles.title}>{SLIDES[activeIndex].title}</Text>
-          <Text style={styles.sub}>{SLIDES[activeIndex].sub}</Text>
+        <View style={styles.content} pointerEvents="box-none">
+          {/* Non-interactive copy — grouped so swipes pass straight through it */}
+          <View pointerEvents="none">
+            <Text style={styles.tag}>{SLIDES[activeIndex].tag}</Text>
+            <Text style={styles.title}>{SLIDES[activeIndex].title}</Text>
+            <Text style={styles.sub}>{SLIDES[activeIndex].sub}</Text>
 
-          {/* Pills */}
-          <View style={styles.pillsRow}>
-            {SLIDES[activeIndex].pills.map((pill) => (
-              <View key={pill.label} style={styles.pill}>
-                <Text style={styles.pillIcon}>{pill.icon}</Text>
-                <Text style={styles.pillLabel}>{pill.label}</Text>
-              </View>
-            ))}
-          </View>
+            {/* Pills */}
+            <View style={styles.pillsRow}>
+              {SLIDES[activeIndex].pills.map((pill) => (
+                <View key={pill.label} style={styles.pill}>
+                  <Text style={styles.pillIcon}>{pill.icon}</Text>
+                  <Text style={styles.pillLabel}>{pill.label}</Text>
+                </View>
+              ))}
+            </View>
 
-          {/* Dots */}
-          <View style={styles.dotsRow}>
-            {SLIDES.map((_, i) => (
-              <View key={i} style={[styles.dot, i === activeIndex && styles.dotActive]} />
-            ))}
+            {/* Dots */}
+            <View style={styles.dotsRow}>
+              {SLIDES.map((_, i) => (
+                <View key={i} style={[styles.dot, i === activeIndex && styles.dotActive]} />
+              ))}
+            </View>
           </View>
 
           {/* CTA */}

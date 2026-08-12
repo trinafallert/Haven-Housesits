@@ -534,7 +534,9 @@ export default function SearchScreen() {
     // Tab filters handled client-side
     if (activeTab === 'FREE')      result = result.filter(l => l.sitType !== 'PAID')
     if (activeTab === 'VACANT')    result = result.filter(l => (l.pets ?? []).length === 0 && l.sitType !== 'PAID')
-    if (activeTab === 'LONG_TERM') result = result.filter(l => getDurationDays(l) > 28)
+    // Match the host-chosen category, not the computed span — "sits longer than
+    // N days" is what the minDuration filter below is for.
+    if (activeTab === 'LONG_TERM') result = result.filter(l => l.sitType === 'LONG_TERM')
 
     // Multiple pet type filters (when more than 1 selected)
     if (filters.selectedPets.length > 1) {

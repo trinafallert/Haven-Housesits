@@ -19,6 +19,7 @@ mobile/web-build/
 
 # Build artifacts
 web/build/
+*.tsbuildinfo
 
 # OS
 .DS_Store

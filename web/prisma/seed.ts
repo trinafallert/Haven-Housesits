@@ -67,7 +67,7 @@ async function main() {
       backgroundCheckStatus: 'VERIFIED', averageRating: 4.9, totalSits: 19, totalReviews: 16,
     }}),
     prisma.user.create({ data: {
-      email: 'trina@havenhousesits.com', firstName: 'Trina', lastName: 'Fallert', password: pw,
+      email: 'trina@havensits.com', firstName: 'Trina', lastName: 'Fallert', password: pw,
       city: 'San Francisco', state: 'CA', country: 'United States',
       bio: 'Founder of Haven Housesits.',
       tagline: 'Making housesitting better',

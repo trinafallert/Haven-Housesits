@@ -1,69 +1,11 @@
 import Link from 'next/link'
 import { Metadata } from 'next'
+import { postList, categories } from '@/lib/blog'
 
 export const metadata: Metadata = {
   title: 'Blog | Haven Housesits',
   description: 'Tips, stories, and guides for house sitters and pet owners.',
 }
-
-const posts = [
-  {
-    slug: 'how-house-sitting-works',
-    title: 'How House Sitting Works: A Complete Guide for Beginners',
-    excerpt: 'Everything you need to know about house sitting — from finding your first sit to building a five-star reputation.',
-    category: 'Getting Started',
-    date: 'March 5, 2026',
-    readTime: '6 min read',
-    emoji: '🏠',
-  },
-  {
-    slug: 'tips-for-pet-owners',
-    title: '8 Tips for Pet Owners Using House Sitters for the First Time',
-    excerpt: 'Leaving your pets with someone new can feel daunting. Here\'s how to find the right sitter and set everyone up for success.',
-    category: 'Pet Owners',
-    date: 'March 3, 2026',
-    readTime: '5 min read',
-    emoji: '🐾',
-  },
-  {
-    slug: 'paid-vs-free-sits',
-    title: 'Paid Sits vs. Free Sits: Which Is Right for You?',
-    excerpt: 'Haven offers both free and paid house sitting opportunities. We break down the pros, cons, and when each makes sense.',
-    category: 'Sitters',
-    date: 'February 28, 2026',
-    readTime: '4 min read',
-    emoji: '💰',
-  },
-  {
-    slug: 'build-a-great-sitter-profile',
-    title: 'How to Build a Sitter Profile That Gets Accepted',
-    excerpt: 'Your profile is your first impression. Learn what pet owners actually look for when choosing a house sitter.',
-    category: 'Sitters',
-    date: 'February 24, 2026',
-    readTime: '5 min read',
-    emoji: '⭐',
-  },
-  {
-    slug: 'house-sitting-packing-list',
-    title: 'The Ultimate House Sitting Packing List',
-    excerpt: 'From emergency vet numbers to pet food storage — everything you should bring (and ask about) before your sit begins.',
-    category: 'Tips & Tricks',
-    date: 'February 20, 2026',
-    readTime: '4 min read',
-    emoji: '🎒',
-  },
-  {
-    slug: 'haven-vs-trustedhousesitters',
-    title: 'Haven vs. TrustedHouseSitters: What\'s Different?',
-    excerpt: 'We\'re a new kind of house sitting platform. Here\'s what makes Haven unique — and why sitters and owners are making the switch.',
-    category: 'About Haven',
-    date: 'February 15, 2026',
-    readTime: '3 min read',
-    emoji: '🌿',
-  },
-]
-
-const categories = ['All', 'Getting Started', 'Pet Owners', 'Sitters', 'Tips & Tricks', 'About Haven']
 
 export default function BlogPage() {
   return (
@@ -102,7 +44,7 @@ export default function BlogPage() {
       {/* Posts Grid */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
+          {postList.map((post) => (
             <Link key={post.slug} href={`/blog/${post.slug}`} className="group">
               <article className="bg-white rounded-2xl overflow-hidden border border-haven-sand hover:shadow-lg transition-all duration-200 hover:-translate-y-1 h-full flex flex-col">
                 {/* Emoji banner */}

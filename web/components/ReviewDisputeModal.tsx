@@ -49,7 +49,7 @@ export default function ReviewDisputeModal({
     files.forEach((f) => fd.append('attachments', f))
 
     try {
-      await fetch('/haven/api/reviews/dispute', { method: 'POST', body: fd })
+      await fetch('/api/reviews/dispute', { method: 'POST', body: fd })
     } catch {
       // fail silently — still show success (support will also get email)
     }

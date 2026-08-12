@@ -1,6 +1,6 @@
 /**
  * Haven Housesits — Mobile API Client
- * Base URL: https://3.219.64.247/haven/api
+ * Base URL: https://havensits.com/api (override with EXPO_PUBLIC_API_URL)
  * Auth: JWT stored in expo-secure-store, sent as Authorization: Bearer <token>
  */
 
@@ -8,7 +8,7 @@ import * as SecureStore from 'expo-secure-store'
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const BASE_URL = 'https://indices-liability-interim-threshold.trycloudflare.com/haven/api'
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://havensits.com/api'
 const TOKEN_KEY = 'haven_auth_token'
 const USER_KEY  = 'haven_auth_user'
 

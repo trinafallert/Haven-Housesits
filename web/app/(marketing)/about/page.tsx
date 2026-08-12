@@ -129,13 +129,13 @@ export default function AboutPage() {
         <p className="text-haven-gray mb-8 max-w-xl mx-auto">Free to join. A global community growing daily.</p>
         <div className="flex gap-4 justify-center flex-wrap">
           <Link
-            href="/haven/signup"
+            href="/signup"
             className="inline-flex items-center gap-2 bg-haven-teal hover:bg-haven-teal-dark text-white font-bold px-8 py-4 rounded-2xl text-base transition-colors"
           >
             Get started free <ArrowRight className="h-5 w-5" />
           </Link>
           <Link
-            href="/haven/search"
+            href="/search"
             className="inline-flex items-center gap-2 border-2 border-haven-teal text-haven-teal-dark hover:bg-haven-teal-pale font-semibold px-8 py-4 rounded-2xl text-base transition-colors"
           >
             Browse sits

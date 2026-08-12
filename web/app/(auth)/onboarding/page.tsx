@@ -156,7 +156,7 @@ export default function OnboardingPage() {
     walkDuration:        null,
   })
 
-  const firstName = session?.user?.name?.split(' ')[0] ?? (session?.user as any)?.firstName ?? ''
+  const firstName = session?.user?.name?.split(' ')[0] ?? ''
   const displayName = firstName || 'there'
 
   function toggleArray(arr: string[], val: string): string[] {
@@ -169,7 +169,7 @@ export default function OnboardingPage() {
   async function finish() {
     setSubmitting(true)
     try {
-      await fetch('/haven/api/profile/onboarding', {
+      await fetch('/api/profile/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
