@@ -325,4 +325,9 @@ export const postList: PostMeta[] = Object.entries(posts).map(
 )
 
 /** Filter chips for the index, derived so they can't drift from the posts. */
-export const categories: string[] = ['All', ...new Set(postList.map((p) => p.category))]
+// Deduped by first appearance rather than a Set — tsconfig sets no `target`,
+// so it defaults to ES5 and spreading a Set would need downlevelIteration.
+export const categories: string[] = [
+  'All',
+  ...postList.map((p) => p.category).filter((c, i, all) => all.indexOf(c) === i),
+]
