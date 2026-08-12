@@ -31,7 +31,7 @@ export function SearchClient({ initialParams }: SearchClientProps) {
       if (params.search)  qs.set('search',  params.search)
       if (params.city)    qs.set('city',    params.city)
       if (params.sitType) qs.set('sitType', params.sitType)
-      const res = await fetch(`/haven/api/listings?${qs}`)
+      const res = await fetch(`/api/listings?${qs}`)
       if (!res.ok) throw new Error('fetch failed')
       const data = await res.json()
       setListings(data.listings || [])

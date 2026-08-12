@@ -84,9 +84,9 @@
       "eas": {
         "projectId": "YOUR_EAS_PROJECT_ID"
       },
-      "privacyPolicyUrl": "https://havenhousesits.com/privacy",
-      "termsUrl": "https://havenhousesits.com/terms",
-      "supportEmail": "support@havenhousesits.com"
+      "privacyPolicyUrl": "https://havensits.com/privacy",
+      "termsUrl": "https://havensits.com/terms",
+      "supportEmail": "support@havensits.com"
     }
   }
 }

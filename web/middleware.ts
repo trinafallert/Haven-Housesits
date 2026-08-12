@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // ─── 0. Handle CORS preflight for API routes (mobile app support) ─────────
-  if (request.method === 'OPTIONS' && pathname.startsWith('/haven/api')) {
+  if (request.method === 'OPTIONS' && pathname.startsWith('/api')) {
     return new NextResponse(null, {
       status: 204,
       headers: {
@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
   })
 
   // Add CORS headers to API responses
-  if (pathname.startsWith('/haven/api')) {
+  if (pathname.startsWith('/api')) {
     response.headers.set('Access-Control-Allow-Origin', '*')
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
     response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')

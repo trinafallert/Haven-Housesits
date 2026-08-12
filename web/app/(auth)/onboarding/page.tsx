@@ -169,7 +169,7 @@ export default function OnboardingPage() {
   async function finish() {
     setSubmitting(true)
     try {
-      await fetch('/haven/api/profile/onboarding', {
+      await fetch('/api/profile/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

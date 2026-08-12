@@ -53,7 +53,7 @@ export function SignupForm() {
   async function onSubmit(data: FormValues) {
     setLoading(true)
     try {
-      const res = await fetch('/haven/api/auth/register', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, isStudent: isStudentEmail(data.email) }),
@@ -69,11 +69,11 @@ export function SignupForm() {
         email: data.email,
         password: data.password,
         redirect: false,
-        callbackUrl: '/haven/onboarding',
+        callbackUrl: '/onboarding',
       })
       if (signInResult?.error) {
         // Registration succeeded but auto-login failed — send them to login page
-        router.push('/haven/login?registered=1')
+        router.push('/login?registered=1')
       } else {
         router.push('/onboarding')
       }

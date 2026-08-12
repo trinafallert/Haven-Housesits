@@ -4,7 +4,7 @@ import { Providers } from './providers'
 
 // Use system fonts (no Google Fonts network request required during build)
 
-export const metadataBase = new URL('https://havenhousesits.com')
+export const metadataBase = new URL('https://havensits.com')
 const interVariable  = '--font-inter'
 const playfairVariable = '--font-playfair'
 
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://havenhousesits.com',
+    url: 'https://havensits.com',
     siteName: 'Haven Housesits',
     title: 'Haven Housesits — Find Your Perfect House Sit',
     description:
