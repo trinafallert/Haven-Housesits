@@ -156,7 +156,7 @@ export default function OnboardingPage() {
     walkDuration:        null,
   })
 
-  const firstName = session?.user?.name?.split(' ')[0] ?? (session?.user as any)?.firstName ?? ''
+  const firstName = session?.user?.name?.split(' ')[0] ?? ''
   const displayName = firstName || 'there'
 
   function toggleArray(arr: string[], val: string): string[] {
