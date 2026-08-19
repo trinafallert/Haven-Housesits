@@ -1,0 +1,25 @@
+# AWS Amplify Hosting build settings.
+#
+# This repo is an npm workspace with the Next.js app in web/, so the build runs
+# from the repo root (buildPath: '/') rather than from appRoot. The root install
+# also triggers web's postinstall (prisma generate), which the build needs —
+# next build fails while collecting page data without a generated client.
+version: 1
+applications:
+  - appRoot: web
+    frontend:
+      buildPath: '/'
+      phases:
+        preBuild:
+          commands:
+            - npm install
+        build:
+          commands:
+            - npm run build --workspace=haven-housesits-web
+      artifacts:
+        baseDirectory: web/.next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*

@@ -2,6 +2,10 @@
 
 generator client {
   provider = "prisma-client-js"
+  // rhel-openssl-3.0.x is the engine for the Node 18+ Lambda runtime behind
+  // Amplify Hosting's SSR compute. Without it the build succeeds and every
+  // server request fails at runtime with "Query engine could not be located".
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
