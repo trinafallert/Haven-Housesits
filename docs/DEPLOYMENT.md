@@ -1,70 +1,67 @@
-# Launching havensits.com
+# Launching havensits.com on AWS
 
 Starting point: the domain is registered and its Route 53 hosted zone is live
 (it delegates to `ns-135.awsdns-16.com`, `ns-671.awsdns-19.net`,
 `ns-1070.awsdns-05.org`, `ns-1831.awsdns-36.co.uk`), but it has **no records** —
-nothing is deployed and there is no server yet. This document is the path from
-that to a live site.
+nothing is deployed and there is no server yet.
 
 ## What the app requires
 
-These constraints come from the code, and they rule some hosting options in and
-out:
+These come from the code, and they rule some hosting options in and out:
 
-| Requirement | Why |
+| Requirement | Source |
 | --- | --- |
-| A **Node runtime** | Next.js 14.2.5 with SSR pages, `/api/*` route handlers, and `middleware.ts`. Static hosting cannot run any of it. |
-| **PostgreSQL** | Prisma with `provider = "postgresql"` and ~20 models. |
-| Build-time `prisma generate` | Without it the build fails while collecting page data. |
-| Server-side secrets | `DATABASE_URL`, `NEXTAUTH_SECRET`, `JWT_SECRET`, `GOOGLE_CLIENT_*`, `STRIPE_*`. |
+| A **Node runtime** | Next.js 14.2.5 — SSR pages, `/api/*` route handlers, `middleware.ts` |
+| **PostgreSQL** | Prisma with `provider = "postgresql"` and ~20 models |
+| `prisma generate` before build | `next build` fails while collecting page data without it |
+| Server-side secrets | `DATABASE_URL`, `NEXTAUTH_*`, `JWT_SECRET`, `GOOGLE_CLIENT_*`, `STRIPE_*` |
 
-> **S3 + CloudFront will not work.** That stack serves static files; it has no
-> Node origin. An IAM role scoped to S3/CloudFront/ACM is the right shape for a
-> static site or a domain redirect, not for this app.
+> **S3 + CloudFront cannot host this app.** That stack serves static files and
+> has no Node origin. It is the right shape for a static site or a domain
+> redirect, not for an app with SSR, route handlers, and middleware.
 
-The app is served at the **domain root**. It used to sit under a `/haven`
+The app is served at the **domain root**. It previously sat under a `/haven`
 subpath; that `basePath` was removed, so any host or proxy that mounts it under
 a subpath will 404 every route.
 
-## Recommended path: Vercel + managed Postgres
+## Host: AWS Amplify Hosting
 
-Vercel builds Next.js as a first-class target — SSR, route handlers, and
-middleware work with no configuration — so this is the shortest route to a
-working site. The AWS-native alternative is in the last section.
+Amplify Hosting runs Next.js SSR on managed Lambda compute, builds from the
+repo, provisions the TLS certificate, and manages the Route 53 records for you.
 
-### 1. Create the database
+Two pieces of this repo already exist for it:
 
-Any managed Postgres works: Neon, Supabase, or RDS. Neon and Supabase have free
-tiers and hand you a connection string directly; RDS keeps everything in AWS but
-needs VPC and public-access configuration.
+- **`amplify.yml`** (repo root) — the monorepo build spec. This is an npm
+  workspace with the app in `web/`, so the build runs from the repo root
+  (`buildPath: '/'`) and the artifacts come from `web/.next`.
+- **`postinstall: prisma generate`** in `web/package.json` — the root install
+  triggers it, so the client exists before `next build` runs.
 
-Keep the resulting `DATABASE_URL` — it is needed in step 3.
+### 1. Database
 
-### 2. Import the repository
+Amplify's SSR compute is managed by AWS and **is not attached to your VPC**, so
+a private-subnet RDS instance is unreachable from it. Pick one of:
 
-In Vercel, create a project from this repository and set:
+- **RDS Postgres, publicly accessible**, locked down with a security group and
+  forced TLS. Keeps everything in your AWS account.
+- **A serverless Postgres** such as Neon or Prisma Postgres, which speaks TLS
+  over the public internet and needs no VPC work.
 
-- **Root Directory**: `web` — this is a monorepo with `web/` and `mobile/`
-  workspaces; the default (repo root) will not build.
-- **Framework Preset**: Next.js (detected automatically).
+Either way, keep the connection string — it becomes `DATABASE_URL`.
 
-Prisma's client must be generated before `next build`. Add this to
-`web/package.json` so it happens on every deploy:
+### 2. Create the Amplify app
 
-```json
-"scripts": {
-  "postinstall": "prisma generate"
-}
-```
+In the Amplify console → **Create new app** → connect this GitHub repository and
+pick the deployment branch.
 
-Alternatively set the Vercel build command to
-`prisma generate && next build`. Skipping this is the most common first-deploy
-failure — the build gets as far as collecting page data and then dies with
-`@prisma/client did not initialize yet`.
+- Tick **My app is a monorepo** and enter `web` as the app root. Amplify sets
+  `AMPLIFY_MONOREPO_APP_ROOT=web` from this.
+- Amplify detects Next.js and uses the committed `amplify.yml`, which overrides
+  anything configured in the console.
 
-### 3. Set environment variables
+### 3. Environment variables
 
-In the Vercel project's **Settings → Environment Variables**:
+In **Hosting → Environment variables**:
 
 ```sh
 DATABASE_URL="postgresql://…"          # from step 1
@@ -82,81 +79,74 @@ NEXT_PUBLIC_API_URL="https://havensits.com/api"
 ```
 
 `NEXT_PUBLIC_*` values are **inlined at build time**, not read at runtime.
-Changing one requires a redeploy, not just a restart.
+Changing one needs a redeploy, not a restart.
 
-See `web/.env.example` for the optional extras (Resend email, S3 uploads).
+`web/.env.example` lists the optional extras (Resend email, S3 uploads).
 
 ### 4. Initialise the schema
 
 There is no `prisma/migrations` directory, so the schema is applied with a push
-rather than a migration run. From a machine with `DATABASE_URL` set:
+rather than a migration run. From any machine that can reach the database:
 
 ```sh
 cd web
-npx prisma db push      # creates the tables
-npm run db:seed         # optional: demo users and listings
+DATABASE_URL="postgresql://…" npx prisma db push   # create the tables
+DATABASE_URL="postgresql://…" npm run db:seed      # optional demo data
 ```
 
-Run this before the first real traffic — the app expects the tables to exist.
+Do this before the first real traffic — the app expects the tables to exist.
 
-### 5. Add the domain in Vercel
+### 5. Connect the domain
 
-In **Settings → Domains**, add `havensits.com`. Vercel will prompt to add `www`
-as well; accept.
+In the Amplify app → **Hosting → Custom domains → Add domain**, enter
+`havensits.com`. Because the hosted zone is in the same AWS account, Amplify
+creates the Route 53 records and requests the ACM certificate itself. Add the
+`www` subdomain at the same time.
 
-Vercel then displays the exact DNS records to create. **Use the values it
-shows** — in particular the `www` CNAME target is unique per project (it looks
-like `d1d4fc829fe7bc7c.vercel-dns-017.com`), so it cannot be guessed or copied
-from another project.
+If the zone were in a different account you would create the records by hand
+from the values Amplify displays.
 
-### 6. Create the Route 53 records
+### 6. Google OAuth
 
-In the `havensits.com` hosted zone, add what the Vercel dashboard specified.
-Currently that is an apex `A` record to Vercel's anycast IP and a `www` CNAME to
-the project-specific target:
-
-| Type  | Name  | Value                                  |
-| ----- | ----- | -------------------------------------- |
-| A     | `@`   | `76.76.21.21`                          |
-| CNAME | `www` | *(the exact value from the dashboard)* |
-
-Confirm the apex IP against the dashboard too — Vercel's docs note it may differ
-per domain.
-
-Verify propagation:
-
-```sh
-dig +short havensits.com
-dig +short www.havensits.com
-```
-
-Vercel issues the TLS certificate automatically once the records resolve.
-
-### 7. Google OAuth
-
-In Google Cloud Console → APIs & Services → Credentials → the OAuth 2.0 client
+Google Cloud Console → APIs & Services → Credentials → the OAuth 2.0 client
 matching `GOOGLE_CLIENT_ID`:
 
 - **Authorized redirect URIs**: `https://havensits.com/api/auth/callback/google`
 - **Authorized JavaScript origins**: `https://havensits.com`
 
-Missing the redirect URI is the classic broken launch: the site loads perfectly
-and only Google sign-in fails, with `redirect_uri_mismatch`.
+Missing the redirect URI is the classic broken launch — the site loads fine and
+only Google sign-in fails, with `redirect_uri_mismatch`.
 
-### 8. Stripe webhook
+### 7. Stripe webhook
 
-In the Stripe dashboard, add an endpoint at
-`https://havensits.com/api/payments/webhook`, then copy its signing secret into
-`STRIPE_WEBHOOK_SECRET` and redeploy. The route is already pinned to the Node
-runtime for signature verification.
+Add an endpoint at `https://havensits.com/api/payments/webhook`, then put its
+signing secret in `STRIPE_WEBHOOK_SECRET` and redeploy. The route is already
+pinned to the Node runtime for signature verification.
+
+## Prisma on Lambda
+
+`schema.prisma` sets:
+
+```prisma
+binaryTargets = ["native", "rhel-openssl-3.0.x"]
+```
+
+`rhel-openssl-3.0.x` is the query engine for the Node 18+ Lambda runtime behind
+Amplify's SSR compute; `native` covers local development. Without the Lambda
+target the **build still succeeds** and every server-rendered request fails at
+runtime with `Query engine could not be located` — a failure that never appears
+in local testing.
+
+Next's output file tracing picks the engine up automatically, so no bundling
+configuration is needed.
 
 ## Verify
 
 ```sh
-curl -sI https://havensits.com/        | head -1   # 200
-curl -sI https://havensits.com/blog    | head -1   # 200
+curl -sI https://havensits.com/             | head -1   # 200
+curl -sI https://havensits.com/blog         | head -1   # 200
 curl -s  https://havensits.com/api/listings | head -c 200
-curl -sI https://havensits.com/haven/  | head -1   # 404 — the old subpath is gone
+curl -sI https://havensits.com/haven/       | head -1   # 404 — old subpath is gone
 ```
 
 Then by hand:
@@ -164,35 +154,26 @@ Then by hand:
 - Sign in with Google — it should land on `/dashboard`, not a 404
 - Sign in with email and password
 - Visit `/dashboard` signed out — it should redirect to `/login`. This guard was
-  inert under the old basePath and is newly live, so it is worth exercising.
+  inert under the old basePath and is newly live, so exercise it.
 - Open a blog post and confirm lists and emphasis render
+
+## Alternatives
+
+**Vercel** — the same app deploys with no AWS-specific pieces: set the root
+directory to `web`, add the same environment variables, and point Route 53 at
+the records Vercel displays (the `www` CNAME target is project-specific, so take
+it from the dashboard rather than copying one). `amplify.yml` is ignored there,
+and the Lambda binary target is harmless.
+
+**Cloudflare** is fine as a DNS provider in front of either host — move the
+nameservers off Route 53 and recreate the records. If you proxy it, set SSL/TLS
+to **Full (strict)** or you get redirect loops. Cloudflare *Workers* as the host
+is a bigger change: Prisma cannot use TCP there, so it needs the
+`@prisma/adapter-pg` driver adapter, the `driverAdapters` preview flag, and a
+rewrite of `web/lib/prisma.ts` away from the shared singleton.
 
 ## Mobile
 
 The Expo app defaults to `https://havensits.com/api` and reads
 `EXPO_PUBLIC_API_URL` as an override. Point that at a LAN address for local
 development; leave it unset for production builds.
-
-## AWS-native alternative
-
-To keep hosting inside AWS, the equivalent stack is:
-
-- **AWS Amplify Hosting** — supports Next.js SSR, connects to the repo, and
-  integrates with Route 53 for the domain and certificate. Closest equivalent to
-  the Vercel path above.
-- **App Runner or ECS Fargate** behind an ALB — more control, more setup; point
-  Route 53 at the ALB or App Runner domain with an alias record.
-- **RDS Postgres** for the database.
-
-The application steps are unchanged: `prisma generate` before build, the same
-environment variables, the same OAuth redirect URI, and the same schema push.
-Only the host and the shape of the Route 53 record differ — an alias record to
-an AWS resource rather than an A record to Vercel.
-
-## Note on the previous revision
-
-An earlier version of this document described an nginx reverse proxy in front of
-an origin at `3.219.64.247`, inferred from a value once hardcoded in the mobile
-API client. That IP was never verified, and the domain it accompanied
-(`havenhousesits.com`) does not resolve at all, so nothing was ever served
-there. Disregard that setup.
