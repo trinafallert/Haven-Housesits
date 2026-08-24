@@ -1,0 +1,49 @@
+{
+  "family": "haven-web",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "REPLACE_WITH_ecsTaskExecutionRole_ARN",
+  "taskRoleArn": "REPLACE_WITH_ecsTaskRole_ARN",
+  "containerDefinitions": [
+    {
+      "name": "haven-web",
+      "image": "REPLACE_WITH_ECR_IMAGE_URI:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 3000, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "NEXTAUTH_URL", "value": "https://havensits.com" },
+        { "name": "NEXT_PUBLIC_APP_URL", "value": "https://havensits.com" },
+        { "name": "NEXT_PUBLIC_API_URL", "value": "https://havensits.com/api" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL",       "valueFrom": "REPLACE_WITH_SECRETS_MANAGER_ARN:DATABASE_URL::" },
+        { "name": "NEXTAUTH_SECRET",    "valueFrom": "REPLACE_WITH_SECRETS_MANAGER_ARN:NEXTAUTH_SECRET::" },
+        { "name": "JWT_SECRET",         "valueFrom": "REPLACE_WITH_SECRETS_MANAGER_ARN:JWT_SECRET::" },
+        { "name": "GOOGLE_CLIENT_ID",   "valueFrom": "REPLACE_WITH_SECRETS_MANAGER_ARN:GOOGLE_CLIENT_ID::" },
+        { "name": "GOOGLE_CLIENT_SECRET", "valueFrom": "REPLACE_WITH_SECRETS_MANAGER_ARN:GOOGLE_CLIENT_SECRET::" },
+        { "name": "STRIPE_SECRET_KEY",  "valueFrom": "REPLACE_WITH_SECRETS_MANAGER_ARN:STRIPE_SECRET_KEY::" },
+        { "name": "STRIPE_WEBHOOK_SECRET", "valueFrom": "REPLACE_WITH_SECRETS_MANAGER_ARN:STRIPE_WEBHOOK_SECRET::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/haven-web",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "web"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      }
+    }
+  ]
+}

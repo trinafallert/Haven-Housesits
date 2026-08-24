@@ -1,0 +1,10 @@
+**/node_modules
+**/.next
+**/.git
+**/.env*
+!**/.env.example
+**/*.log
+**/.DS_Store
+mobile
+docs
+**/tsconfig.tsbuildinfo
