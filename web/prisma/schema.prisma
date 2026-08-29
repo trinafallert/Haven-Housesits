@@ -1,0 +1,623 @@
+// Haven Housesits - Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+  // rhel-openssl-3.0.x is the engine for the Node 18+ Lambda runtime behind
+  // Amplify Hosting's SSR compute. Without it the build succeeds and every
+  // server request fails at runtime with "Query engine could not be located".
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum Role {
+  SITTER
+  OWNER
+  BOTH
+  ADMIN
+}
+
+enum SitType {
+  FREE       // Exchange sit (no payment)
+  PAID       // Paid sit (sitter gets paid)
+  VACANT     // No pets, just house watching
+  LONG_TERM  // 30+ days
+  PET_ONLY   // Pets only, owner stays nearby
+}
+
+enum HomeType {
+  HOUSE
+  APARTMENT
+  CONDO
+  VILLA
+  CABIN
+  FARM
+  BOAT
+  OTHER
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  FILLED
+  COMPLETED
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+  COMPLETED
+}
+
+enum PetType {
+  DOG
+  PUPPY
+  SENIOR_DOG
+  CAT
+  KITTEN
+  SENIOR_CAT
+  BIRD
+  FISH
+  REPTILE
+  SMALL_PET
+  RABBIT
+  POULTRY
+  LIVESTOCK
+  OTHER
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+}
+
+enum AddonType {
+  DEEP_CLEAN          // Deep clean before owner returns
+  MAIL_COLLECTION     // Mail & package collection
+  KEY_HANDOFF         // Meet sitter for key handoff
+  AIRPORT_PICKUP      // Pickup owner from airport on return
+  WELCOME_BASKET      // Welcome basket for sitter
+}
+
+enum PaymentStatus {
+  PENDING
+  HELD         // Escrow: money held before sit starts (paid sits)
+  RELEASED     // Sit complete — funds released to sitter
+  PROCESSING
+  COMPLETED
+  REFUNDED
+  FAILED
+}
+
+enum DogWalkRequirement {
+  WALK_1X_DAILY       // Dog needs 1 walk per day
+  WALK_2X_DAILY       // Dog needs 2 walks per day
+  WALK_3X_DAILY       // Dog needs 3+ walks per day
+  YARD_WALK_PREFERRED // Has a yard, walks preferred but not required
+  YARD_NO_WALK        // Has a yard, no walks needed
+  NO_DOGS             // No dogs in the listing
+}
+
+enum NotificationType {
+  NEW_APPLICATION
+  APPLICATION_ACCEPTED
+  APPLICATION_DECLINED
+  NEW_MESSAGE
+  REVIEW_REQUEST
+  REVIEW_RECEIVED
+  SIT_REMINDER
+  PAYMENT_RECEIVED
+  TIP_RECEIVED
+  SYSTEM
+}
+
+enum MembershipPlan {
+  FREE_TRIAL
+  STANDARD
+  PREMIUM
+}
+
+// ─────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  firstName     String
+  lastName      String
+  displayName   String?   // e.g. "Renae Christine & Trina"
+  avatar        String?
+  coverPhoto    String?
+  phone         String?
+  phoneVerified Boolean   @default(false)
+  bio           String?
+  tagline       String?   // Short headline on profile
+  occupation    String?
+  age           Int?
+  city          String?
+  state         String?
+  country       String?
+  role          Role      @default(BOTH)
+
+  // Membership
+  plan              MembershipPlan @default(FREE_TRIAL)
+  planExpiresAt     DateTime?
+  stripeCustomerId  String?
+
+  // Verification
+  backgroundCheckStatus VerificationStatus @default(UNVERIFIED)
+  idVerified            Boolean            @default(false)
+  isVerified            Boolean            @default(false)
+
+  // Sitter-specific
+  yearsExperience   Int?
+  whyHouseSit       String?
+  petTypes          PetType[]   // Types of pets comfortable with
+  preferredCountries String[]   // Country codes
+  hasCoSitter       Boolean     @default(false)
+
+  // Owner-specific
+  emergencyContact  String?
+  emergencyPhone    String?
+
+  // API-route fields
+  passwordHash      String?   // bcrypt hash (credentials login)
+  membershipPlan    MembershipPlan @default(FREE_TRIAL)
+  membershipExpiresAt DateTime?
+  isStudent         Boolean   @default(false)
+  totalReviews      Int       @default(0)
+  stripeAccountId   String?   // Stripe Connect (for payouts)
+
+  // Stats
+  totalSits         Int       @default(0)
+  averageRating     Float?
+
+  // Relations
+  accounts          Account[]
+  sessions          Session[]
+  listings          Listing[]
+  applications      Application[]
+  coSitters         CoSitter[]       @relation("PrimaryUser")
+  coSitterOf        CoSitter[]       @relation("CoSitter")
+  reviewsGiven      Review[]         @relation("ReviewGiver")
+  reviewsReceived   Review[]         @relation("ReviewReceiver")
+  sentMessages      Message[]        @relation("MessageSender")
+  conversations     ConversationParticipant[]
+  savedSearches     SavedSearch[]
+  savedListings     SavedListing[]
+  notifications     Notification[]
+  paymentsGiven     Payment[]        @relation("Payer")
+  paymentsReceived  Payment[]        @relation("Payee")
+  availability      Availability[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// Co-sitter support (like TrustedHousesitters "Renae Christine & Trina")
+model CoSitter {
+  id          String @id @default(cuid())
+  primaryId   String
+  coSitterId  String
+  relationship String? // "partner", "family", "friend"
+  primary     User   @relation("PrimaryUser", fields: [primaryId], references: [id], onDelete: Cascade)
+  coSitter    User   @relation("CoSitter", fields: [coSitterId], references: [id], onDelete: Cascade)
+
+  @@unique([primaryId, coSitterId])
+  @@map("co_sitters")
+}
+
+// NextAuth
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─────────────────────────────────────────
+// LISTING
+// ─────────────────────────────────────────
+
+model Listing {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @db.Text
+  type        SitType       @default(FREE)
+  homeType    HomeType      @default(HOUSE)
+  status      ListingStatus @default(DRAFT)
+
+  // Pricing (for paid sits)
+  isPaid      Boolean @default(false)
+  price       Float?
+  currency    String  @default("USD")
+  priceUnit   String  @default("per_night") // per_night, per_week, flat_rate
+
+  // Location
+  address     String
+  city        String
+  state       String?
+  country     String
+  postalCode  String?
+  lat         Float
+  lng         Float
+  hideExactAddress Boolean @default(true) // Show approx location until confirmed
+
+  // Dates
+  startDate   DateTime
+  endDate     DateTime
+
+  // Home details
+  bedrooms    Int     @default(1)
+  bathrooms   Float   @default(1)
+  squareFeet  Int?
+
+  // Amenities toggles
+  hasWifi           Boolean @default(false)
+  hasFastWifi       Boolean @default(false)
+  hasParking        Boolean @default(false)
+  hasPool           Boolean @default(false)
+  hasGarden         Boolean @default(false)
+  hasWasher         Boolean @default(false)
+  hasDryer          Boolean @default(false)
+  hasAircon         Boolean @default(false)
+  hasHeating        Boolean @default(true)
+  hasWorkspace      Boolean @default(false)
+  remoteWorkFriendly Boolean @default(false)
+  isAccessible      Boolean @default(false)
+  isFamilyFriendly  Boolean @default(false)
+  isPublicTransport Boolean @default(false)
+  carIncluded       Boolean @default(false)
+  isSmokerOk        Boolean @default(false)
+
+  // Haven-exclusive smart filters
+  hasAutoLitterBox  Boolean            @default(false)  // Sitters can filter for this
+  dogWalkReq        DogWalkRequirement @default(NO_DOGS) // Sitters can filter by walk requirements
+  hasBackyard       Boolean            @default(false)
+
+  // Local attractions
+  nearBeach       Boolean @default(false)
+  nearCity        Boolean @default(false)
+  nearCountryside Boolean @default(false)
+  nearMountains   Boolean @default(false)
+
+  // Application settings
+  maxApplications   Int     @default(7) // Max 7 active (non-declined) applications — when one is declined, a new slot opens
+  currentApplicants Int     @default(0)
+
+  // Photos
+  photos      String[]
+
+  // Relations
+  ownerId     String
+  owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  pets        Pet[]
+  applications Application[]
+  savedBy     SavedListing[]
+  addons      ListingAddon[]
+  reviews     Review[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("listings")
+}
+
+model Pet {
+  id          String  @id @default(cuid())
+  name        String
+  type        PetType
+  breed       String?
+  age         Int?    // in years
+  weight      Float?  // in lbs
+  description String?
+  photo       String?
+
+  // Needs
+  feedingInstructions String?
+  vetInfo             String?
+  medications         String?
+  specialNeeds        String?
+  isVaccinated        Boolean @default(false)
+  isNeutered          Boolean @default(false)
+  isGoodWithKids      Boolean @default(true)
+  isGoodWithDogs      Boolean @default(true)
+  isGoodWithCats      Boolean @default(true)
+  isIndoor            Boolean @default(true)
+
+  listingId   String
+  listing     Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@map("pets")
+}
+
+// Add-ons that home owners can purchase
+model ListingAddon {
+  id          String    @id @default(cuid())
+  type        AddonType
+  title       String
+  description String?
+  price       Float
+  currency    String    @default("USD")
+  isSelected  Boolean   @default(false)
+
+  listingId   String
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@map("listing_addons")
+}
+
+// ─────────────────────────────────────────
+// APPLICATION
+// ─────────────────────────────────────────
+
+model Application {
+  id          String            @id @default(cuid())
+  status      ApplicationStatus @default(PENDING)
+  message     String            @db.Text
+
+  // Sitter's dates if different
+  proposedStart DateTime?
+  proposedEnd   DateTime?
+
+  listingId   String
+  sitterId    String
+  listing     Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  sitter      User        @relation(fields: [sitterId], references: [id], onDelete: Cascade)
+  conversation Conversation?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([listingId, sitterId])
+  @@map("applications")
+}
+
+// ─────────────────────────────────────────
+// MESSAGING
+// ─────────────────────────────────────────
+
+model Conversation {
+  id            String    @id @default(cuid())
+  applicationId String?   @unique
+  application   Application? @relation(fields: [applicationId], references: [id])
+  participants  ConversationParticipant[]
+  messages      Message[]
+  lastMessageAt DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  unreadCount    Int          @default(0)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  content        String       @db.Text
+  imageUrl       String?
+  isSystemMessage Boolean     @default(false)
+  systemEventType String?     // "application_accepted", "application_declined", etc.
+  conversationId String
+  senderId       String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  readBy         String[]     // User IDs who have read this
+
+  createdAt      DateTime     @default(now())
+
+  @@map("messages")
+}
+
+// ─────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────
+
+model Review {
+  id            String  @id @default(cuid())
+  rating        Int     // 1-5 overall
+  communication Int     @default(5)
+  accuracy      Int     @default(5)
+  welcome       Int     @default(5)
+  pets          Int     @default(5)
+  title         String?
+  comment       String? @db.Text
+  isPublished   Boolean @default(false) // blind review system
+
+  reviewerId    String
+  revieweeId    String
+  applicationId String?
+  listingId     String?
+  reviewer      User     @relation("ReviewGiver",    fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee      User     @relation("ReviewReceiver", fields: [revieweeId], references: [id], onDelete: Cascade)
+  listing       Listing? @relation(fields: [listingId], references: [id])
+  disputes      ReviewDispute[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+// ─────────────────────────────────────────
+// PAYMENTS & TIPS
+// ─────────────────────────────────────────
+
+model Payment {
+  id                String        @id @default(cuid())
+  amount            Float
+  currency          String        @default("USD")
+  status            PaymentStatus @default(PENDING)
+  type              String        // "sit_payment", "tip", "membership", "addon"
+  description       String?
+  stripePaymentId   String?
+  stripeSessionId   String?
+
+  payerId           String
+  payeeId           String?
+  payer             User          @relation("Payer", fields: [payerId], references: [id])
+  payee             User?         @relation("Payee", fields: [payeeId], references: [id])
+
+  // Escrow fields for paid sits
+  platformFee       Float     @default(0)
+  stripeHoldId      String?   // Payment intent ID while funds are held
+  heldAt            DateTime? // When escrow started
+  releasedAt        DateTime? // When funds were released to sitter
+  applicationId     String?   // Which sit this payment is for
+  isTip             Boolean   @default(false)
+
+  metadata          Json?
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────
+// SAVED SEARCHES & FAVOURITES
+// ─────────────────────────────────────────
+
+model SavedSearch {
+  id         String   @id @default(cuid())
+  name       String
+  filters    Json     // Stored filter criteria
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifyOn   Boolean  @default(true)
+
+  createdAt  DateTime @default(now())
+
+  @@map("saved_searches")
+}
+
+model SavedListing {
+  id        String  @id @default(cuid())
+  userId    String
+  listingId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@map("saved_listings")
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────
+// AVAILABILITY (sitter calendar)
+// ─────────────────────────────────────────
+
+model Availability {
+  id        String   @id @default(cuid())
+  userId    String
+  startDate DateTime
+  endDate   DateTime
+  isBooked  Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("availability")
+}
+
+// ─────────────────────────────────────────
+// REVIEW DISPUTES
+// ─────────────────────────────────────────
+
+model ReviewDispute {
+  id               String   @id @default(cuid())
+  reviewId         String
+  review           Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  inaccurate       String   @default("")
+  unfair           String   @default("")
+  sideOfStory      String
+  proof            String   @default("")
+  contactEmail     String   @default("")
+  contactPhone     String   @default("")
+  attachmentNames  String[]
+  status           String   @default("PENDING") // PENDING | UNDER_REVIEW | RESOLVED | DISMISSED
+  adminNotes       String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("review_disputes")
+}

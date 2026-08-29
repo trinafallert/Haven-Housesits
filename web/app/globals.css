@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: system-ui, -apple-system, sans-serif;
+    --font-playfair: Georgia, 'Times New Roman', serif;
+
+    /* Haven brand tokens */
+    --color-teal:        #5BA4A4;
+    --color-teal-dark:   #3D8A8A;
+    --color-teal-light:  #7ECECE;
+    --color-teal-pale:   #D6EEEE;
+    --color-cream:       #FBF8F3;
+    --color-cream-dark:  #F0EBE0;
+    --color-sand:        #E2D5BE;
+    --color-sand-dark:   #C9B99A;
+    --color-navy:        #1A2E35;
+    --color-navy-light:  #2C4A55;
+    --color-gray:        #5C6B73;
+    --color-gray-light:  #9AACB3;
+    --color-gray-pale:   #EEF3F5;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-inter);
+    background-color: var(--color-cream);
+    color: var(--color-navy);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-playfair);
+    letter-spacing: -0.02em;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-sand);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-sand-dark);
+  }
+}
+
+@layer components {
+  /* ─── Buttons ─── */
+  .btn-primary {
+    @apply bg-haven-teal text-white font-semibold px-6 py-3 rounded-2xl
+           hover:bg-haven-teal-dark transition-all duration-200
+           active:scale-[0.98] shadow-haven hover:shadow-haven-lg
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply border-2 border-haven-teal text-haven-teal-dark font-semibold px-6 py-3 rounded-2xl
+           hover:bg-haven-teal-pale transition-all duration-200
+           active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply text-haven-navy font-medium px-4 py-2 rounded-xl
+           hover:bg-haven-gray-pale transition-all duration-200;
+  }
+
+  /* ─── Cards ─── */
+  .card {
+    @apply bg-white rounded-3xl shadow-card border border-haven-sand/30
+           hover:shadow-card-hover transition-all duration-300;
+  }
+
+  .card-flat {
+    @apply bg-white rounded-2xl border border-haven-sand/40;
+  }
+
+  /* ─── Inputs ─── */
+  .input {
+    @apply w-full px-4 py-3 rounded-xl border border-haven-sand
+           bg-white text-haven-navy placeholder:text-haven-gray-light
+           focus:outline-none focus:ring-2 focus:ring-haven-teal/40
+           focus:border-haven-teal transition-all duration-200;
+  }
+
+  .label {
+    @apply block text-sm font-semibold text-haven-navy mb-1.5;
+  }
+
+  /* ─── Badges ─── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-teal   { @apply badge bg-haven-teal-pale text-haven-teal-dark; }
+  .badge-new    { @apply badge bg-haven-teal text-white; }
+  .badge-paid   { @apply badge bg-haven-warning/15 text-amber-700; }
+  .badge-free   { @apply badge bg-haven-success/15 text-green-700; }
+  .badge-hot    { @apply badge bg-red-50 text-red-600; }
+
+  /* ─── Section container ─── */
+  .container-haven {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* ─── Verified chip ─── */
+  .verified-chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+           bg-haven-teal-pale text-haven-teal-dark text-xs font-semibold;
+  }
+
+  /* ─── Option selector (solo/co-sit style) ─── */
+  .option-btn {
+    @apply w-full text-left px-5 py-4 rounded-2xl border-2 border-haven-sand
+           font-medium text-haven-navy transition-all duration-200
+           hover:border-haven-teal hover:bg-haven-teal-pale/30;
+  }
+
+  .option-btn-selected {
+    @apply border-haven-teal-dark bg-haven-teal-pale text-haven-teal-dark;
+  }
+
+  /* ─── Nav tab ─── */
+  .nav-tab {
+    @apply flex flex-col items-center gap-1 px-3 py-2 rounded-xl
+           text-haven-gray text-xs font-medium transition-all duration-200
+           hover:text-haven-teal hover:bg-haven-teal-pale/50;
+  }
+
+  .nav-tab-active {
+    @apply text-haven-teal-dark;
+  }
+
+  /* ─── Star rating ─── */
+  .star-filled  { @apply text-amber-400; }
+  .star-empty   { @apply text-haven-sand; }
+
+  /* ─── Page header ─── */
+  .page-title {
+    @apply font-display text-3xl md:text-4xl font-bold text-haven-navy;
+  }
+
+  .section-title {
+    @apply font-display text-2xl font-bold text-haven-navy;
+  }
+
+  /* ─── Listing card image overlay badges ─── */
+  .listing-badge {
+    @apply absolute bottom-2 left-2 px-2 py-1 rounded-lg text-white text-xs font-bold uppercase tracking-wide;
+  }
+
+  /* ─── Message bubble ─── */
+  .msg-bubble-sent {
+    @apply bg-haven-teal text-white rounded-2xl rounded-tr-sm px-4 py-3 max-w-[80%] ml-auto;
+  }
+
+  .msg-bubble-received {
+    @apply bg-white text-haven-navy rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%] shadow-sm border border-haven-sand/30;
+  }
+
+  .msg-system-pill {
+    @apply mx-auto text-center px-4 py-2 bg-haven-navy/80 text-white text-xs rounded-full font-medium;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  .gradient-haven {
+    background: linear-gradient(135deg, #5BA4A4 0%, #3D8A8A 100%);
+  }
+
+  .gradient-hero {
+    background: linear-gradient(160deg, #FBF8F3 0%, #D6EEEE 50%, #7ECECE 100%);
+  }
+
+  .gradient-card-overlay {
+    background: linear-gradient(to top, rgba(26,46,53,0.7) 0%, transparent 60%);
+  }
+
+  .glass {
+    backdrop-filter: blur(12px);
+    background: rgba(251, 248, 243, 0.85);
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+}
